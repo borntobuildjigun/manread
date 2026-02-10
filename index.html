@@ -3,22 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>로또 번호 추첨기</title>
+    <title>독서 토론 앱</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>로또 번호 추첨기</h1>
-            <p>버튼을 눌러 행운의 번호를 확인하세요!</p>
-        </header>
-        <main>
-            <div id="lotto-numbers" class="lotto-numbers-container">
-                <!-- 생성된 번호가 여기에 표시됩니다. -->
+    <header>
+        <h1>독서 토론 클럽</h1>
+    </header>
+    <main>
+        <div id="left-column">
+            <div id="add-book-container">
+                <h2>새로운 책 추가하기</h2>
+                <form id="add-book-form">
+                    <input type="text" id="new-book-title" placeholder="책 제목" required>
+                    <input type="text" id="new-book-author" placeholder="저자" required>
+                    <button type="submit">책 추가</button>
+                </form>
             </div>
-            <button id="generate-btn" class="generate-btn">번호 생성</button>
-        </main>
-    </div>
-    <script src="main.js"></script>
+            <hr>
+            <div id="book-list"></div>
+        </div>
+        <div id="discussion">
+            <div class="initial-message">
+                <p>책을 선택하여 토론을 시작하세요.</p>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2026 독서 토론 클럽</p>
+    </footer>
+    <script src="main.js" type="module"></script>
 </body>
 </html>

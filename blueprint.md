@@ -1,31 +1,53 @@
-# Blueprint: Lotto Number Generator App
+# 독서 토론 앱 개발 계획
 
-## Overview
+## 1. 앱 개요
 
-A visually appealing, single-page web application that allows users to generate a set of random lottery numbers. The application will be built using modern, framework-less web technologies (HTML, CSS, JavaScript) and will follow modern design principles for a polished and intuitive user experience.
+사용자들이 다양한 책에 대한 토론을 나누고 의견을 공유할 수 있는 웹 애플리케이션입니다.
 
-## Features & Design
+## 2. 주요 기능
 
-### Core Functionality
-- **Number Generation:** Users can click a button to generate 6 unique random numbers between 1 and 45.
-- **Visual Display:** The generated numbers are displayed in colored, circular elements that animate into view.
-- **Responsive Design:** The layout adapts smoothly to different screen sizes, ensuring a great experience on both desktop and mobile devices.
+- **책 목록 보기:** 토론이 진행중인 책들의 목록을 확인합니다.
+- **책 추가하기:** 목록에 없는 새로운 책을 추가하여 토론을 시작할 수 있습니다.
+- **토론 보기:** 각 책에 대한 사용자들의 토론 내용을 시간 순서대로 볼 수 있습니다.
+- **의견 남기기:** 자신의 생각이나 질문을 토론에 추가합니다.
 
-### Design Principles
-- **Layout:** A clean, centered layout that focuses user attention on the generated numbers.
-- **Color Palette:** A vibrant and energetic color palette will be used for the number balls, with a contrasting, modern theme for the overall UI.
-- **Typography:** Clear and readable fonts will be used for all text elements.
-- **Animation:** Subtle animations will be used for the button and the appearance of the numbers to create a more engaging feel.
-- **Interactivity:** The "Generate" button will have clear hover and active states.
+## 3. 디자인 컨셉
 
-## Current Task: Initial Implementation Complete
+- **메인 컬러:** 차분하고 신뢰감을 주는 네이비 (#0C0C4A)와 청록색 (#00A6A6)을 사용하여 지적인 분위기를 연출합니다.
+- **폰트:** 가독성이 좋은 'Noto Sans KR'를 기본 폰트로 사용합니다.
+- **레이아웃:** 카드 형태의 UI를 사용하여 각 책 정보를 깔끔하게 보여주고, 반응형 디자인을 적용하여 모든 기기에서 편안하게 사용할 수 있도록 합니다.
 
-**Objective:** Create the initial set of files (`index.html`, `style.css`, `main.js`) and implement the basic structure and functionality of the application.
+## 4. 기술 스택
 
-**Steps:**
-1.  [**Completed**] Create the `blueprint.md` file to document the project plan.
-2.  [**Completed**] Create `index.html` with the basic document structure, including a title, a container for the numbers, and a "Generate" button.
-3.  [**Completed**] Create `style.css` to implement the visual design, including the layout, typography, color scheme, and initial styles for the number containers and button.
-4.  [**Completed**] Create `main.js` to implement the core logic for generating random numbers and dynamically updating the DOM to display them.
-5.  [**Completed**] Link the CSS and JavaScript files in `index.html`.
-6.  [**Completed**] Verify that the initial version of the application is working correctly.
+- HTML, CSS, JavaScript (프레임워크 사용하지 않음)
+- **웹 컴포넌트:** 재사용 가능한 UI 요소를 캡슐화하여 개발 효율성을 높입니다.
+- **ES Modules:** JavaScript 코드를 모듈화하여 관리합니다.
+
+## 5. 개발 단계
+
+1.  **프로젝트 초기 설정:** 기본 HTML, CSS, JS 파일 및 `blueprint.md` 생성
+2.  **데이터 구조 정의:** 책과 토론 데이터를 표현할 JavaScript 객체 구조 설계
+3.  **UI 컴포넌트 개발 (웹 컴포넌트):**
+    -   `book-card`: 책 정보를 표시하는 카드
+    -   `discussion-thread`: 토론 내용을 보여주는 스레드
+    -   `comment-form`: 새로운 의견을 등록하는 폼
+4.  **메인 기능 구현:**
+    -   초기 책 데이터 렌더링
+    -   새로운 책 추가 기능
+    -   토론 의견 추가 기능
+5.  **스타일링 및 마무리:** 전체적인 디자인 적용 및 반응형 처리
+
+---
+
+## 현재 진행 계획
+
+- **[완료]** `blueprint.md` 파일 생성
+- **[완료]** `index.html`, `style.css`, `main.js` 파일 생성 및 기본 구조 설정
+- **[완료]** 데이터 구조 정의 (샘플 데이터)
+- **[완료]** UI 컴포넌트 개발 (`book-card`)
+- **[완료]** 메인 기능 구현 (초기 책 데이터 렌더링)
+- **[완료]** UI 컴포넌트 개발 (`discussion-thread`)
+- **[완료]** UI 컴포넌트 개발 (`comment-form`)
+- **[완료]** 새로운 책 추가 기능 구현
+- **[완료]** 토론 의견 추가 기능 구현
+- **[완료]** 스타일링 및 마무리
