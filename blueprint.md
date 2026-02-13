@@ -23,6 +23,8 @@
 - HTML, CSS, JavaScript (프레임워크 사용하지 않음)
 - **웹 컴포넌트:** 재사용 가능한 UI 요소를 캡슐화하여 개발 효율성을 높입니다.
 - **ES Modules:** JavaScript 코드를 모듈화하여 관리합니다.
+- **Firebase Realtime Database:** 책 목록 및 토론 댓글을 실시간으로 저장하고 동기화합니다.
+- **Firebase Hosting:** 웹 애플리케이션을 배포합니다.
 
 ## 5. 개발 단계
 
@@ -37,7 +39,10 @@
     -   새로운 책 추가 기능
     -   토론 의견 추가 기능
     -   Formspree를 이용한 도서 제안 폼 추가
+    -   Firebase SDK 통합 및 초기화
+    -   Firebase Realtime Database를 이용한 데이터 영속성 구현 (책 목록, 토론 댓글)
 5.  **스타일링 및 마무리:** 전체적인 디자인 적용 및 반응형 처리
+6.  **Firebase Hosting 배포:** 애플리케이션을 온라인에 배포
 
 ---
 
@@ -54,3 +59,5 @@
 - **[완료]** 토론 의견 추가 기능 구현
 - **[완료]** Formspree를 이용한 도서 제안 폼 추가
 - **[완료]** 스타일링 및 마무리
+- **[완료]** Firebase SDK 통합 및 초기화 (main.js에 Firebase 설정 추가 필요)
+- **[완료]** Firebase Hosting 설정 (`firebase.json` 및 `.firebaserc` 수동 생성)

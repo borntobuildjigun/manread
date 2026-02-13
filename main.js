@@ -1,32 +1,24 @@
-// 1. 데이터 구조 정의 (샘플 데이터)
-const books = [
-    {
-        id: 1,
-        title: "데미안",
-        author: "헤르만 헤세",
-        cover: "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-        discussions: [
-            { user: "철학자", comment: "이 책은 자아 발견의 여정을 정말 잘 그려냈어요." },
-            { user: "여행자", comment: "싱클레어의 성장이 인상 깊었습니다." }
-        ]
-    },
-    {
-        id: 2,
-        title: "어린왕자",
-        author: "생텍쥐페리",
-        cover: "https://images.pexels.com/photos/34620/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-        discussions: [
-            { user: "어른이", comment: "어른이 되어서 읽으니 또 다른 감동이 있네요." }
-        ]
-    },
-    {
-        id: 3,
-        title: "노인과 바다",
-        author: "어니스트 헤밍웨이",
-        cover: "https://images.pexels.com/photos/415071/pexels-photo-415071.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-        discussions: []
-    }
-];
+// Firebase Configuration (Replace with your actual project config)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  databaseURL: "YOUR_DATABASE_URL", // e.g., "https://YOUR_PROJECT_ID.firebaseio.com"
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// Global variables to hold data from Firebase
+let allBooks = [];
+let allDiscussions = {}; // Store discussions keyed by book ID
+
+// 1. 데이터 구조 정의 (Firebase에서 로드)
+// books 변수와 discussions 변수는 Firebase에서 데이터를 로드한 후 설정됩니다.
 
 // 2. UI 컴포넌트 개발 (웹 컴포넌트)
 class BookCard extends HTMLElement {
@@ -37,7 +29,8 @@ class BookCard extends HTMLElement {
 
     connectedCallback() {
         const bookId = this.getAttribute('book-id');
-        const book = books.find(b => b.id == bookId);
+        const book = allBooks.find(b => b.id == bookId);
+        const discussionsForBook = allDiscussions[bookId] ? Object.values(allDiscussions[bookId]) : [];
 
         if (book) {
             this.shadowRoot.innerHTML = `
@@ -90,7 +83,7 @@ class BookCard extends HTMLElement {
                     <div class="info">
                         <span class="title">${book.title}</span>
                         <span class="author">${book.author}</span>
-                        <span class="discussion-count">토론 ${book.discussions.length}개</span>
+                        <span class="discussion-count">토론 ${discussionsForBook.length}개</span>
                     </div>
                 </div>
             `;
@@ -111,10 +104,11 @@ class DiscussionThread extends HTMLElement {
 
     render() {
         const bookId = this.getAttribute('book-id');
-        const book = books.find(b => b.id == bookId);
+        const book = allBooks.find(b => b.id == bookId);
+        const discussionsForBook = allDiscussions[bookId] ? Object.values(allDiscussions[bookId]) : [];
 
         if (book) {
-            const discussionsHtml = book.discussions.map(d => `
+            const discussionsHtml = discussionsForBook.map(d => `
                 <div class="comment">
                     <span class="user">${d.user}</span>
                     <p class="comment-text">${d.comment}</p>
@@ -162,10 +156,10 @@ class DiscussionThread extends HTMLElement {
                 // Also update the discussion count on the book card
                 const bookCard = document.querySelector(`book-card[book-id="${bookId}"]`);
                 if(bookCard) {
-                    const book = books.find(b => b.id == bookId);
+                    const latestDiscussionsForBook = allDiscussions[bookId] ? Object.values(allDiscussions[bookId]) : [];
                     const countElement = bookCard.shadowRoot.querySelector('.discussion-count');
                     if(countElement) {
-                        countElement.textContent = `토론 ${book.discussions.length}개`;
+                        countElement.textContent = `토론 ${latestDiscussionsForBook.length}개`;
                     }
                 }
             });
@@ -213,18 +207,16 @@ class CommentForm extends HTMLElement {
             </form>
         `;
 
-        this.shadowRoot.querySelector('form').addEventListener('submit', (e) => {
+        this.shadowRoot.querySelector('form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const textarea = this.shadowRoot.querySelector('textarea');
             const commentText = textarea.value.trim();
             if (commentText) {
                 const bookId = this.getAttribute('book-id');
-                const book = books.find(b => b.id == bookId);
-                if (book) {
-                    book.discussions.push({ user: "익명", comment: commentText });
-                    textarea.value = '';
-                    this.dispatchEvent(new CustomEvent('comment-added', { bubbles: true, composed: true }));
-                }
+                const bookRef = database.ref(`discussions/${bookId}`);
+                await bookRef.push({ user: "익명", comment: commentText, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                textarea.value = '';
+                this.dispatchEvent(new CustomEvent('comment-added', { bubbles: true, composed: true }));
             }
         });
     }
@@ -239,17 +231,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderBookList = () => {
         bookListElement.innerHTML = '';
-        books.forEach(book => {
+        allBooks.forEach(book => {
             const bookCard = document.createElement('book-card');
             bookCard.setAttribute('book-id', book.id);
             bookListElement.appendChild(bookCard);
         });
     };
 
-    if (bookListElement) {
-        // 초기 책 목록 렌더링
+    // Listen for changes in books data
+    database.ref('books').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allBooks = [];
+        for (let id in data) {
+            allBooks.push({ id, ...data[id] });
+        }
         renderBookList();
+    });
 
+    // Listen for changes in discussions data
+    database.ref('discussions').on('value', (snapshot) => {
+        allDiscussions = snapshot.val() || {};
+        // If a discussion thread is active, re-render it to show new comments
+        const activeBookCard = document.querySelector('book-card.active');
+        if (activeBookCard) {
+            const bookId = activeBookCard.getAttribute('book-id');
+            discussionElement.innerHTML = ''; // Clear existing discussion
+            const discussionThread = document.createElement('discussion-thread');
+            discussionThread.setAttribute('book-id', bookId);
+            discussionElement.appendChild(discussionThread);
+        } else {
+            // If no discussion is active, re-render the book list to update discussion counts
+            renderBookList();
+        }
+    });
+
+
+    if (bookListElement) {
         // 책 카드 클릭 시 토론 표시 (이벤트 위임)
         bookListElement.addEventListener('click', (event) => {
             const bookCard = event.target.closest('book-card');
@@ -275,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (addBookForm) {
-        addBookForm.addEventListener('submit', (e) => {
+        addBookForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const titleInput = document.getElementById('new-book-title');
             const authorInput = document.getElementById('new-book-author');
@@ -285,14 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (title && author) {
                 const newBook = {
-                    id: Date.now(), // Use timestamp for a simple unique ID
                     title,
                     author,
                     cover: `https://source.unsplash.com/random/400x600?book&t=${Date.now()}`, // Random placeholder image
-                    discussions: []
                 };
-                books.push(newBook);
-                renderBookList();
+                await database.ref('books').push(newBook);
                 titleInput.value = '';
                 authorInput.value = '';
             }
