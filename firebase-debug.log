@@ -1,0 +1,102 @@
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T11:59:56.803Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T11:59:56.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:09.629Z] Running auto auth
+[debug] [2026-02-13T12:00:09.630Z] Running auto auth
+[debug] [2026-02-13T12:00:09.662Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.664Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo [none]
+[debug] [2026-02-13T12:00:09.721Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.721Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo [none]
+[debug] [2026-02-13T12:00:09.953Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo 200
+[debug] [2026-02-13T12:00:09.953Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo {"name":"projects/manread-74612/billingInfo","projectId":"manread-74612","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-13T12:00:09.961Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.964Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.966Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.984Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.984Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:09.984Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com [none]
+[debug] [2026-02-13T12:00:09.985Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:09.986Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-13T12:00:09.986Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:09.988Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-13T12:00:09.988Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:09.990Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-13T12:00:09.990Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:09.992Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com [none]
+[debug] [2026-02-13T12:00:09.992Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:10.770Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo 200
+[debug] [2026-02-13T12:00:10.770Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo {"name":"projects/manread-74612/billingInfo","projectId":"manread-74612","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-13T12:00:10.771Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:10.771Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:10.771Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:10.778Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:10.778Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:10.779Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com [none]
+[debug] [2026-02-13T12:00:10.779Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:10.780Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-13T12:00:10.780Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:10.782Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-13T12:00:10.783Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:10.784Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-13T12:00:10.784Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:10.788Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com [none]
+[debug] [2026-02-13T12:00:10.788Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com  x-goog-user-project=manread-74612
+[debug] [2026-02-13T12:00:11.007Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com 403
+[debug] [2026-02-13T12:00:11.007Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com [omitted]
+[debug] [2026-02-13T12:00:11.085Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-13T12:00:11.085Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.107Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-13T12:00:11.107Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.111Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com 200
+[debug] [2026-02-13T12:00:11.111Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.118Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-13T12:00:11.119Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.835Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-13T12:00:11.835Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.847Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-13T12:00:11.848Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.851Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com 403
+[debug] [2026-02-13T12:00:11.851Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firebaseio.com [omitted]
+[debug] [2026-02-13T12:00:11.852Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-13T12:00:11.852Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-13T12:00:11.907Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com 200
+[debug] [2026-02-13T12:00:11.907Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/manread-74612/services/firestore.googleapis.com [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:11.912Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:11.913Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)
+[debug] [2026-02-13T12:00:11.913Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:11.913Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo [none]
+[debug] [2026-02-13T12:00:12.131Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo 200
+[debug] [2026-02-13T12:00:12.131Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo {"name":"projects/manread-74612/billingInfo","projectId":"manread-74612","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:12.135Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:12.135Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:12.164Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:12.164Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)
+[debug] [2026-02-13T12:00:12.164Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:12.164Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo [none]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:12.173Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:12.173Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)
+[debug] [2026-02-13T12:00:12.174Z] No OAuth tokens found
+[debug] [2026-02-13T12:00:12.174Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo [none]
+[debug] [2026-02-13T12:00:12.371Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo 200
+[debug] [2026-02-13T12:00:12.371Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo {"name":"projects/manread-74612/billingInfo","projectId":"manread-74612","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:12.373Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:12.373Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)
+[debug] [2026-02-13T12:00:12.383Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo 200
+[debug] [2026-02-13T12:00:12.383Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/manread-74612/billingInfo {"name":"projects/manread-74612/billingInfo","projectId":"manread-74612","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2026-02-13T12:00:12.386Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2026-02-13T12:00:12.386Z] > authorizing via signed-in user (borntobuild.jigun@gmail.com)

@@ -1,13 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
 :root {
-    --primary-color: #2c3e50;  /* Darker, more professional blue */
-    --secondary-color: #3498db; /* A friendly, inviting blue */
-    --accent-color: #e74c3c;
-    --background-color: #ecf0f1;
-    --text-color: #34495e;
-    --card-bg-color: #ffffff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --background-color: #141414; /* Netflix-like dark background */
+    --text-color: #e5e5e5;
+    --card-bg-color: #242424;
+    --shadow-color: rgba(0, 0, 0, 0.5);
     font-family: 'Noto Sans KR', sans-serif;
 }
 
@@ -25,74 +24,115 @@ a {
 }
 
 a:hover {
-    color: var(--primary-color);
-    text-decoration: underline;
+    color: #fff;
+    text-decoration: none;
 }
 
 header {
-    background-color: var(--card-bg-color);
-    color: var(--primary-color);
+    background-color: #141414;
     padding: 1.5rem 2rem;
-    text-align: center;
-    border-bottom: 1px solid #dcdcdc;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background-color 0.3s;
 }
 
 header h1 {
     margin: 0;
     font-size: 1.8rem;
+    color: #e50914; /* Netflix Red */
 }
 
 header nav a {
     margin-left: 1.5rem;
     font-weight: 700;
+    color: #e5e5e5;
 }
 
 #about {
-    background-color: var(--card-bg-color);
+    background-color: transparent;
     padding: 2rem;
-    margin: 2rem auto;
+    margin: 1rem auto;
     max-width: 1100px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px var(--shadow-color);
 }
 
 #about h2 {
     margin-top: 0;
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--secondary-color);
+    color: #fff;
+    border-bottom: 2px solid #e50914;
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
 }
 
 main {
     padding: 1rem 2rem;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 2rem;
 }
 
-#left-column {
+.book-shelf {
+    margin-bottom: 3rem;
+}
+
+.shelf-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.shelf-container {
     display: flex;
-    flex-direction: column;
+    overflow-x: auto;
+    padding-bottom: 1.5rem; /* For scrollbar spacing */
+    scrollbar-width: thin;
+    scrollbar-color: #555 #222;
 }
 
-#discussion .initial-message {
-    background-color: var(--card-bg-color);
-    padding: 3rem 2rem;
-    border-radius: 8px;
-    text-align: center;
-    color: #777;
-    border: 2px dashed #bdc3c7;
+.shelf-container::-webkit-scrollbar {
+    height: 10px;
 }
 
-#discussion .initial-message h2 {
-    color: var(--primary-color);
+.shelf-container::-webkit-scrollbar-track {
+    background: #222;
 }
+
+.shelf-container::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 5px;
+}
+
+.book-card {
+    flex: 0 0 180px; /* Do not grow, do not shrink, base width */
+    margin-right: 1rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.book-card:hover {
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+.book-card img {
+    width: 180px;
+    height: 270px;
+    object-fit: cover;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.book-title {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 
 footer {
     text-align: center;
@@ -100,102 +140,15 @@ footer {
     margin-top: 2rem;
     font-size: 0.9rem;
     color: #95a5a6;
-    background-color: #34495e;
-    color: white;
+    background-color: #1f1f1f;
 }
 
 footer a {
     color: #ecf0f1;
 }
 
-.card {
-    background-color: var(--card-bg-color);
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 5px var(--shadow-color);
-}
-
-.card h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-}
-
-#add-book-container, #suggest-book-container {
-    background-color: var(--card-bg-color);
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 5px var(--shadow-color);
-}
-
-#add-book-container h2, #suggest-book-container h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-input[type="text"] {
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-button, input[type="submit"] {
-    padding: 0.8rem 1.5rem;
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    align-self: flex-start;
-}
-
-button:hover, input[type="submit"]:hover {
-    background-color: var(--primary-color);
-}
-
-#add-book-form {
-    flex-direction: column;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 1.5rem 0;
-}
-
-/* Privacy Page Specific Styles */
-main > section {
-    background-color: var(--card-bg-color);
-    padding: 2rem;
-    max-width: 900px;
-    margin: 2rem auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px var(--shadow-color);
-}
-
-main > section h2 {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--secondary-color);
-    padding-bottom: 0.5rem;
-}
-
-main > section p {
-    margin-bottom: 1rem;
-}
-
 @media (max-width: 768px) {
     main {
-        grid-template-columns: 1fr;
         padding: 1rem;
     }
 
@@ -206,10 +159,6 @@ main > section p {
 
     header h1 {
         margin-bottom: 1rem;
-    }
-
-    header nav a {
-        margin: 0 0.5rem;
     }
 }
 
