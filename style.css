@@ -1,9 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
 :root {
-    --primary-color: #0C0C4A;
-    --secondary-color: #00A6A6;
-    --background-color: #f4f4f4;
-    --text-color: #333;
-    --card-bg-color: #fff;
+    --primary-color: #2c3e50;  /* Darker, more professional blue */
+    --secondary-color: #3498db; /* A friendly, inviting blue */
+    --accent-color: #e74c3c;
+    --background-color: #ecf0f1;
+    --text-color: #34495e;
+    --card-bg-color: #ffffff;
     --shadow-color: rgba(0, 0, 0, 0.1);
     font-family: 'Noto Sans KR', sans-serif;
 }
@@ -12,22 +15,64 @@ body {
     background-color: var(--background-color);
     color: var(--text-color);
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.7;
+}
+
+a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
 }
 
 header {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 1rem 0;
+    background-color: var(--card-bg-color);
+    color: var(--primary-color);
+    padding: 1.5rem 2rem;
     text-align: center;
+    border-bottom: 1px solid #dcdcdc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+header nav a {
+    margin-left: 1.5rem;
+    font-weight: 700;
+}
+
+#about {
+    background-color: var(--card-bg-color);
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 1100px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+#about h2 {
+    margin-top: 0;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 main {
-    padding: 2rem;
+    padding: 1rem 2rem;
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 350px 1fr;
     gap: 2rem;
 }
 
@@ -38,104 +83,114 @@ main {
 
 #discussion .initial-message {
     background-color: var(--card-bg-color);
-    padding: 2rem;
+    padding: 3rem 2rem;
     border-radius: 8px;
     text-align: center;
     color: #777;
+    border: 2px dashed #bdc3c7;
 }
 
-
+#discussion .initial-message h2 {
+    color: var(--primary-color);
+}
 
 footer {
     text-align: center;
-    padding: 1rem 0;
+    padding: 2rem 1rem;
     margin-top: 2rem;
     font-size: 0.9rem;
-    color: #777;
-}
-
-#add-book-container {
-    background-color: var(--card-bg-color);
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 2rem;
-}
-
-#add-book-container h2 {
-    margin-top: 0;
-}
-
-#add-book-form {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-#add-book-form input[type="text"] {
-    flex-grow: 1;
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-#add-book-form button {
-    padding: 0.8rem 1.5rem;
-    background-color: var(--primary-color);
+    color: #95a5a6;
+    background-color: #34495e;
     color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
 }
 
-#add-book-form button:hover {
-    background-color: #00A6A6;
+footer a {
+    color: #ecf0f1;
 }
 
-hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 2rem 0;
-}
-
-#suggest-book-container {
+.card {
     background-color: var(--card-bg-color);
     padding: 1.5rem;
     border-radius: 8px;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
 }
 
-#suggest-book-container h2 {
+.card h2 {
     margin-top: 0;
+    color: var(--primary-color);
 }
 
-#suggest-book-container form {
+#add-book-container, #suggest-book-container {
+    background-color: var(--card-bg-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+#add-book-container h2, #suggest-book-container h2 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-#suggest-book-container input[type="text"] {
+input[type="text"] {
     padding: 0.8rem;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 100%; /* Make input fields take full width */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    width: 100%;
+    box-sizing: border-box;
 }
 
-#suggest-book-container button {
+button, input[type="submit"] {
     padding: 0.8rem 1.5rem;
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s;
-    align-self: flex-start; /* Align button to the start, not full width */
+    align-self: flex-start;
 }
 
-#suggest-book-container button:hover {
-    background-color: #00A6A6;
+button:hover, input[type="submit"]:hover {
+    background-color: var(--primary-color);
+}
+
+#add-book-form {
+    flex-direction: column;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 1.5rem 0;
+}
+
+/* Privacy Page Specific Styles */
+main > section {
+    background-color: var(--card-bg-color);
+    padding: 2rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+main > section h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+}
+
+main > section p {
+    margin-bottom: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -145,7 +200,16 @@ hr {
     }
 
     header {
-        padding: 0.5rem 0;
+        flex-direction: column;
+        padding: 1rem;
+    }
+
+    header h1 {
+        margin-bottom: 1rem;
+    }
+
+    header nav a {
+        margin: 0 0.5rem;
     }
 }
 
