@@ -1,30 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.getElementById('roulette-wheel');
-    const spinButton = document.getElementById('spin-button');
-    const resultElement = document.getElementById('result');
-    const recommendationsElement = document.getElementById('recommendations');
-    const bookListElement = document.getElementById('book-list');
+    // --- Common elements and initial setup ---
+    const htmlElement = document.documentElement;
     const themeToggle = document.getElementById('theme-toggle');
-    const langToggle = document.getElementById('lang-toggle'); // Get language toggle button
-    const ctx = canvas ? canvas.getContext('2d') : null; // Only get context if canvas exists
-
-    const genres = [
-        'Fantasy', 'Sci-Fi', 'Mystery', 'Thriller', 'Romance', 'Horror', 'Historical', 'Non-Fiction'
-    ];
-    const colors = ['#FFC107', '#FF5722', '#4CAF50', '#2196F3', '#9C27B0', '#F44336', '#795548', '#607D8B'];
-
-    const bookDatabase = {
-        'Fantasy': ['The Hobbit', 'A Wizard of Earthsea', 'The Name of the Wind', 'Mistborn: The Final Empire', 'The Lies of Locke Lamora'],
-        'Sci-Fi': ['Dune', 'Ender\'s Game', 'Neuromancer', 'The Hitchhiker\'s Guide to the Galaxy', 'Foundation'],
-        'Mystery': ['The Adventures of Sherlock Holmes', 'And Then There Were None', 'The Big Sleep', 'Gone Girl', 'The Girl with the Dragon Tattoo'],
-        'Thriller': ['The Silence of the Lambs', 'The Da Vinci Code', 'The Girl on the Train', 'Before I Go to Sleep', 'The Guest List'],
-        'Romance': ['Pride and Prejudice', 'Outlander', 'The Notebook', 'Me Before You', 'The Hating Game'],
-        'Horror': ['The Shining', 'It', 'Dracula', 'Frankenstein', 'The Haunting of Hill House'],
-        'Historical': ['The Other Boleyn Girl', 'All the Light We Cannot See', 'The Book Thief', 'The Nightingale', 'Wolf Hall'],
-        'Non-Fiction': ['Sapiens: A Brief History of Humankind', 'Educated', 'The Immortal Life of Henrietta Lacks', 'Thinking, Fast and Slow', 'Becoming']
-    };
-
-    // Translations object
+    const langToggle = document.getElementById('lang-toggle');
+    
     const translations = {
         'en': {
             'document_title_index': 'Book Genre Roulette',
@@ -41,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'index_title': 'Find Your Next Read',
             'index_description': 'Spin the wheel to get a random book genre, and we\'ll recommend some great books for you to check out!',
             'spin_button_text': 'Spin',
-            'result_text': 'You should read: ',
+            'result_text_prefix': 'You should read: ', // Prefix for result
             'recommendations_title': 'Top 5 Recommendations:',
 
             'about_title': 'About Us',
@@ -51,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             'contact_title': 'Contact Us',
             'contact_p1': 'Have questions, suggestions, or just want to say hello? We\'d love to hear from you!',
-            'contact_p2': 'You can reach us by email at: ',
+            'contact_p2_prefix': 'You can reach us by email at: ', // Prefix for contact email
 
             'privacy_title': 'Privacy Policy for Book Roulette',
             'privacy_p1': 'At Book Roulette, accessible from bookroulette.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by Book Roulette and how we use it.',
@@ -72,12 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
             'consent_title': 'Consent',
             'consent_p1': 'By using our website, you hereby consent to our Privacy Policy and agree to its Terms and Conditions.',
 
-            'book_title': '[Book Title]',
-            'book_author': 'by [Author Name]',
+            'book_title': '[Book Title]', // Placeholder for dynamic content
+            'book_author_prefix': 'by ', // Prefix for dynamic content
             'summary_title': 'Summary',
-            'summary_content': '[Book summary will go here. This section will contain a unique and interesting summary of the book, to provide value to the user and meet AdSense content requirements.]',
+            'summary_content_placeholder': '[Book summary will go here. This section will contain a unique and interesting summary of the book, to provide value to the user and meet AdSense content requirements.]',
             'why_recommend_title': 'Why we recommend this book',
-            'why_recommend_content': '[A short paragraph explaining why this book is a great read and a good representation of its genre.]'
+            'why_recommend_content_placeholder': '[A short paragraph explaining why this book is a great read and a good representation of its genre.]'
         },
         'ko': {
             'document_title_index': '책 장르 룰렛',
@@ -94,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'index_title': '다음 읽을 책 찾기',
             'index_description': '룰렛을 돌려 무작위 책 장르를 얻고, 멋진 책들을 추천해 드립니다!',
             'spin_button_text': '돌리기',
-            'result_text': '읽어야 할 책:',
+            'result_text_prefix': '읽어야 할 책:',
             'recommendations_title': '상위 5개 추천 도서:',
 
             'about_title': '회사 소개',
@@ -104,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             'contact_title': '문의하기',
             'contact_p1': '질문, 제안이 있으시거나 그냥 인사하고 싶으시면 언제든지 연락 주세요!',
-            'contact_p2': '이메일 주소: ',
+            'contact_p2_prefix': '이메일 주소: ',
 
             'privacy_title': '책 룰렛 개인정보처리방침',
             'privacy_p1': '책 룰렛(bookroulette.com)에서는 방문자의 개인 정보 보호를 최우선으로 생각합니다. 본 개인정보처리방침 문서는 책 룰렛에서 수집 및 기록되는 정보 유형과 해당 정보를 사용하는 방법을 설명합니다.',
@@ -125,65 +104,51 @@ document.addEventListener('DOMContentLoaded', () => {
             'consent_title': '동의',
             'consent_p1': '당사 웹사이트를 사용함으로써 귀하는 본 개인정보처리방침에 동의하고 약관에 동의합니다.',
 
-            'book_title': '[책 제목]',
-            'book_author': '저자: [저자 이름]',
+            'book_title': '[책 제목]', // Placeholder for dynamic content
+            'book_author_prefix': '저자: ', // Prefix for dynamic content
             'summary_title': '요약',
-            'summary_content': '[책 요약이 여기에 들어갑니다. 이 섹션에는 사용자에게 가치를 제공하고 애드센스 콘텐츠 요구 사항을 충족하기 위한 독특하고 흥미로운 책 요약이 포함됩니다.]',
+            'summary_content_placeholder': '[책 요약이 여기에 들어갑니다. 이 섹션에는 사용자에게 가치를 제공하고 애드센스 콘텐츠 요구 사항을 충족하기 위한 독특하고 흥미로운 책 요약이 포함됩니다.]',
             'why_recommend_title': '이 책을 추천하는 이유',
-            'why_recommend_content': '[이 책이 훌륭한 읽을거리이자 해당 장르를 잘 대표하는 이유를 설명하는 짧은 단락입니다.]'
+            'why_recommend_content_placeholder': '[이 책이 훌륭한 읽을거리이자 해당 장르를 잘 대표하는 이유를 설명하는 짧은 단락입니다.]'
         }
     };
 
     function setLanguage(lang) {
-        // Update body lang attribute
-        document.documentElement.lang = lang;
+        htmlElement.lang = lang; // Update html lang attribute
 
-        // Update document title
-        const pageKey = document.body.dataset.pageKey; // Assuming each body has a data-page-key
+        const pageKey = document.body.dataset.pageKey;
         if (pageKey && translations[lang][`document_title_${pageKey}`]) {
-             document.title = translations[lang][`document_title_${pageKey}`];
-        } else if (translations[lang][`document_title_${document.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`]) {
-            // Fallback for pages without data-page-key, using current title as a key
-            document.title = translations[lang][`document_title_${document.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`];
+            document.title = translations[lang][`document_title_${pageKey}`];
         }
 
-
-        // Update elements with data-i18n attribute
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             if (translations[lang][key]) {
-                if (element.tagName === 'A' && key.includes('contact_p2')) { // Special handling for contact email
+                if (key.startsWith('contact_p2_prefix')) {
                     element.innerHTML = translations[lang][key] + `<a href="mailto:contact@bookroulette.com">contact@bookroulette.com</a>`;
-                } else if (key.startsWith('result_text')) {
-                    // result_text is dynamic, only update the base text
-                    element.textContent = translations[lang][key];
+                } else if (key.startsWith('result_text_prefix')) {
+                    // This will be handled when roulette result is displayed
+                    // For initial load, just set the prefix if it's the index page
+                    if (pageKey === 'index' && resultElement) {
+                        resultElement.textContent = translations[lang][key] + (resultElement.textContent.includes(':') ? resultElement.textContent.split(':')[1].trim() : '');
+                    }
+                } else if (key === 'book_author_prefix' && element.classList.contains('author')) {
+                    // Handle dynamic author prefix for book-template
+                    element.textContent = translations[lang][key] + (element.textContent.includes('by ') ? element.textContent.split('by ')[1] : element.textContent);
+                } else if (key.endsWith('_placeholder') || key.includes('book_title')) {
+                    // Placeholders or dynamic book titles/summaries are not translated here
+                    // They will be dynamically inserted or are just for template
                 }
-                 else if (key === 'book_title') {
-                    // Book title is dynamic and comes from the server, we only translate the prefix if any
-                    // For now, keep as placeholder
-                 } else if (key === 'book_author') {
-                    // Book author is dynamic, keep as placeholder
-                 } else if (key === 'summary_content' || key === 'why_recommend_content') {
-                     // These are placeholders for generated content, no need to translate now.
-                 }
                 else {
                     element.textContent = translations[lang][key];
                 }
             }
         });
-
-        // Update book recommendations if they are displayed
-        if (recommendationsElement && recommendationsElement.style.display !== 'none') {
-             const currentGenre = resultElement.textContent.replace(translations[localStorage.getItem('language') || 'en']['result_text'], '').trim();
-             if (currentGenre) {
-                 // Re-display books to get proper language if book titles were translated
-                 // For now, book titles are not translated, so this might not be strictly necessary
-             }
+        
+        if (langToggle) {
+            langToggle.textContent = (lang === 'en') ? '🇰🇷' : '🇺🇸';
+            langToggle.setAttribute('data-lang', (lang === 'en') ? 'ko' : 'en');
         }
-
-
-        langToggle.textContent = (lang === 'en') ? '🇰🇷' : '🇺🇸';
-        langToggle.setAttribute('data-lang', (lang === 'en') ? 'ko' : 'en');
         localStorage.setItem('language', lang);
     }
 
@@ -197,91 +162,139 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.dataset.pageKey = 'contact';
     } else if (pageFileName === 'privacy.html') {
         document.body.dataset.pageKey = 'privacy';
-    } else if (pageFileName.startsWith('book-')) {
-        document.body.dataset.pageKey = 'book_template'; // This will be dynamic in future
+    } else if (pageFileName.startsWith('book-')) { // Generic for book detail pages
+        document.body.dataset.pageKey = 'book_template';
     }
 
 
-    // Spin button event listener
-    if (spinButton) {
-        spinButton.addEventListener('click', () => {
-            if (isSpinning) return;
+    // --- Roulette-specific code (only on index.html) ---
+    if (canvas) { // Check if canvas exists on this page
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spin-button');
+        const resultElement = document.getElementById('result');
+        const recommendationsElement = document.getElementById('recommendations');
+        const bookListElement = document.getElementById('book-list');
 
-            isSpinning = true;
-            resultElement.textContent = '';
-            recommendationsElement.style.display = 'none';
-            bookListElement.innerHTML = '';
-
-            const spinAngle = Math.random() * 360 + 360 * 5; // Spin at least 5 times
-            const totalRotation = currentRotation + spinAngle;
-
-            if (canvas) canvas.style.transform = `rotate(${totalRotation}deg)`;
-            currentRotation = totalRotation;
-
-            setTimeout(() => {
-                const normalizedRotation = (totalRotation % 360 + 360) % 360; // Ensure positive rotation
-                const selectedIndex = Math.floor((360 - normalizedRotation) / (360 / genres.length));
-                const selectedGenre = genres[selectedIndex];
-                
-                resultElement.textContent = translations[localStorage.getItem('language') || 'en']['result_text'] + selectedGenre;
-                
-                const books = bookDatabase[selectedGenre];
-                displayBooks(books, selectedGenre);
-                recommendationsElement.style.display = 'block';
-                
-                isSpinning = false;
-            }, 4000); // Corresponds to the transition duration in CSS
-        });
-    }
-
-    // Draw roulette wheel only if canvas exists
-    if (ctx) {
+        const genres = [
+            'Fantasy', 'Sci-Fi', 'Mystery', 'Thriller', 'Romance', 'Horror', 'Historical', 'Non-Fiction'
+        ];
+        const colors = ['#FFC107', '#FF5722', '#4CAF50', '#2196F3', '#9C27B0', '#F44336', '#795548', '#607D8B'];
         const sliceAngle = 2 * Math.PI / genres.length;
-        drawRouletteWheel();
+
+        function drawRouletteWheel() {
+            if (!ctx) return; // Guard against null ctx
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            genres.forEach((genre, i) => {
+                const startAngle = i * sliceAngle;
+                const endAngle = (i + 1) * sliceAngle;
+
+                ctx.beginPath();
+                ctx.moveTo(200, 200);
+                ctx.arc(200, 200, 200, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(200, 200);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 18px sans-serif';
+                ctx.fillText(genre, 180, 10);
+                ctx.restore();
+            });
+        }
+        
+        if (spinButton) {
+            spinButton.addEventListener('click', () => {
+                if (isSpinning) return;
+
+                isSpinning = true;
+                if (resultElement) resultElement.textContent = '';
+                if (recommendationsElement) recommendationsElement.style.display = 'none';
+                if (bookListElement) bookListElement.innerHTML = '';
+
+                const spinAngle = Math.random() * 360 + 360 * 5; // Spin at least 5 times
+                const totalRotation = currentRotation + spinAngle;
+
+                canvas.style.transform = `rotate(${totalRotation}deg)`;
+                currentRotation = totalRotation;
+
+                setTimeout(() => {
+                    const normalizedRotation = (totalRotation % 360 + 360) % 360; // Ensure positive rotation
+                    const selectedIndex = Math.floor((360 - normalizedRotation) / (360 / genres.length));
+                    const selectedGenre = genres[selectedIndex];
+                    
+                    if (resultElement) {
+                        const currentLang = localStorage.getItem('language') || 'en';
+                        resultElement.textContent = translations[currentLang]['result_text_prefix'] + selectedGenre;
+                    }
+                    
+                    const books = bookDatabase[selectedGenre];
+                    displayBooks(books, selectedGenre);
+                    if (recommendationsElement) recommendationsElement.style.display = 'block';
+                    
+                    isSpinning = false;
+                }, 4000); // Corresponds to the transition duration in CSS
+            });
+        }
+        drawRouletteWheel(); // Initial draw of the roulette wheel
     }
 
 
-    // Theme toggle functionality
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        themeToggle.textContent = isDarkMode ? '🌙' : '☀️';
-    });
+    // --- Theme toggle functionality ---
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            themeToggle.textContent = isDarkMode ? '🌙' : '☀️';
+        });
 
-    // Apply saved theme on page load
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        themeToggle.textContent = '🌙';
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '🌙';
+        } else {
+            // Default is light mode, no class needed, ensure button shows sun
+            document.body.classList.remove('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+    }
+
+
+    // --- Language toggle functionality ---
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            const currentLang = localStorage.getItem('language') || 'en';
+            const newLang = (currentLang === 'en') ? 'ko' : 'en';
+            setLanguage(newLang);
+        });
+
+        // Apply saved language on page load
+        const savedLang = localStorage.getItem('language') || 'en';
+        setLanguage(savedLang); // Initial language setting
+
     } else {
-        document.body.classList.remove('dark-mode');
-        themeToggle.textContent = '☀️';
+        // If no langToggle, still apply default language to translatable elements
+        const savedLang = localStorage.getItem('language') || 'en';
+        setLanguage(savedLang);
     }
+    
 
-    // Language toggle functionality
-    langToggle.addEventListener('click', () => {
-        const currentLang = localStorage.getItem('language') || 'en';
-        const newLang = (currentLang === 'en') ? 'ko' : 'en';
-        setLanguage(newLang);
-    });
+    // --- Global helper functions (can be called from various parts of the script) ---
+    let isSpinning = false; // Moved to a higher scope if needed by roulette
+    let currentRotation = 0; // Moved to a higher scope if needed by roulette
 
-    // Apply saved language on page load
-    const savedLang = localStorage.getItem('language') || 'en';
-    setLanguage(savedLang);
-
-
-    // Ensure book list items link to generic book-template for now
-    // In a real app, these would link to specific book detail pages
     function displayBooks(books, selectedGenre) {
         if (!bookListElement) return; // Guard for pages without book list
 
         bookListElement.innerHTML = '';
         books.forEach(book => {
             const li = document.createElement('li');
-            // Create a simple URL for now
             const bookSlug = book.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-            li.innerHTML = `<a href="book-${bookSlug}.html">${book}</a>`; // This will link to book-template.html for now
+            li.innerHTML = `<a href="book-${bookSlug}.html">${book}</a>`; 
             bookListElement.appendChild(li);
         });
     }
