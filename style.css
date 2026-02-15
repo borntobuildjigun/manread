@@ -8,6 +8,9 @@
     --nav-text-light: #fff;
     --nav-hover-light: #ffd700;
     --result-color-light: #007bff;
+    --button-bg-light: #007bff;
+    --button-text-light: #fff;
+    --button-hover-light: #0056b3;
 }
 
 .dark-mode {
@@ -17,8 +20,11 @@
     --border-color-light: #555;
     --nav-bg-light: #222;
     --nav-text-light: #f0f0f0;
-    --nav-hover-light: #90CAF9; /* Lighter blue for dark mode hover */
-    --result-color-light: #90CAF9; /* Lighter blue for dark mode */
+    --nav-hover-light: #90CAF9;
+    --result-color-light: #90CAF9;
+    --button-bg-light: #90CAF9;
+    --button-text-light: #333;
+    --button-hover-light: #64b5f6;
 }
 
 body {
@@ -28,21 +34,21 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
-    background-color: var(--bg-color-light); /* Use variable */
+    background-color: var(--bg-color-light);
     font-family: sans-serif;
-    color: var(--text-color-light); /* Use variable */
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+    color: var(--text-color-light);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Controls Container for Theme/Language toggles */
 .controls-container {
-    position: absolute; /* Position relative to nav */
+    position: absolute;
     right: 20px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
     gap: 10px;
-    align-items: center; /* Align items vertically */
+    align-items: center;
 }
 
 #theme-toggle, #lang-toggle {
@@ -53,7 +59,7 @@ body {
     padding: 5px;
     border-radius: 5px;
     transition: background-color 0.3s ease;
-    color: var(--nav-text-light); /* Icon color */
+    color: var(--nav-text-light);
 }
 
 #theme-toggle:hover, #lang-toggle:hover {
@@ -62,15 +68,15 @@ body {
 
 nav {
     width: 100%;
-    background-color: var(--nav-bg-light); /* Use variable */
+    background-color: var(--nav-bg-light);
     padding: 15px 0;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    position: relative; /* Needed for absolute positioning of controls-container */
+    position: relative;
 }
 
 nav a {
-    color: var(--nav-text-light); /* Use variable */
+    color: var(--nav-text-light);
     text-decoration: none;
     margin: 0 15px;
     font-size: 1.1em;
@@ -78,93 +84,130 @@ nav a {
 }
 
 nav a:hover {
-    color: var(--nav-hover-light); /* Use variable */
+    color: var(--nav-hover-light);
 }
 
 .main-content {
     flex-grow: 1;
     width: 90%;
     max-width: 800px;
-    background-color: var(--card-bg-light); /* Use variable */
+    background-color: var(--card-bg-light);
     padding: 30px;
     margin: 20px 0;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     text-align: center;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Specific styles for index.html roulette */
-#roulette-wheel {
-    border: 2px solid var(--border-color-light); /* Use variable */
+/* New genre selection styles */
+#genre-selection-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
-#spin-button {
-    border: 5px solid var(--card-bg-light); /* Use variable */
-    background-color: var(--nav-bg-light); /* Use variable */
-    color: var(--nav-text-light); /* Use variable */
+.genre-button {
+    background-color: var(--button-bg-light);
+    color: var(--button-text-light);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-#spin-button:hover {
-    background-color: #555; /* Keep a specific hover for button */
+.genre-button:hover {
+    background-color: var(--button-hover-light);
+    transform: translateY(-2px);
 }
 
 #result {
-    color: var(--result-color-light); /* Use variable */
+    margin-top: 20px;
+    font-size: 2em;
+    color: var(--result-color-light);
+    font-weight: bold;
+}
+
+#recommendations {
+    display: none;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color-light);
 }
 
 #recommendations h3 {
-    color: var(--text-color-light); /* Use variable */
+    font-size: 1.5em;
+    color: var(--text-color-light);
+    margin-bottom: 15px;
+}
+
+#book-list {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 #book-list li {
-    background-color: var(--bg-bg-light); /* Adjust for slight contrast */
-    border: 1px solid var(--border-color-light); /* Use variable */
+    background-color: var(--card-bg-light);
+    border: 1px solid var(--border-color-light);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    text-align: left;
+    transition: background-color 0.3s ease;
 }
 
 #book-list li:hover {
-    background-color: var(--card-bg-light); /* Adjust hover for dark mode */
+    background-color: var(--bg-color-light);
 }
 
 #book-list li a {
     text-decoration: none;
-    color: var(--result-color-light); /* Use variable */
+    color: var(--result-color-light);
     font-weight: bold;
-    display: block; /* Make the whole list item clickable */
+    display: block;
 }
 
 #book-list li a:hover {
     text-decoration: underline;
 }
 
-
 /* Book Detail Page Styles */
 .main-content.book-detail {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: left; /* Default text alignment for details */
+    text-align: left;
 }
 
 .book-detail h1 {
-    color: var(--result-color-light); /* Use variable */
+    color: var(--result-color-light);
 }
 
 .book-detail .author {
     font-style: italic;
-    color: var(--text-color-light); /* Use variable */
+    color: var(--text-color-light);
+    margin-bottom: 20px;
 }
 
 .book-content {
     display: flex;
-    flex-wrap: wrap; /* Allow content to wrap on smaller screens */
+    flex-wrap: wrap;
     gap: 30px;
     margin-top: 20px;
-    justify-content: center; /* Center items when wrapped */
+    justify-content: center;
 }
 
 .book-cover {
-    flex-shrink: 0; /* Don't shrink cover image */
+    flex-shrink: 0;
 }
 
 .book-cover img {
@@ -175,13 +218,13 @@ nav a:hover {
 }
 
 .book-summary {
-    flex-grow: 1; /* Allow summary to take remaining space */
-    max-width: 500px; /* Limit summary width */
+    flex-grow: 1;
+    max-width: 500px;
     text-align: left;
 }
 
 .book-summary h2 {
-    color: var(--text-color-light); /* Use variable */
+    color: var(--text-color-light);
     margin-top: 0;
     margin-bottom: 10px;
 }
@@ -194,20 +237,20 @@ nav a:hover {
 
 footer {
     width: 100%;
-    background-color: var(--nav-bg-light); /* Use variable */
-    color: var(--nav-text-light); /* Use variable */
+    background-color: var(--nav-bg-light);
+    color: var(--nav-text-light);
     text-align: center;
     padding: 15px 0;
-    margin-top: 20px; /* Space above footer */
+    margin-top: 20px;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
 }
 
 footer a {
-    color: var(--nav-text-light); /* Use variable */
+    color: var(--nav-text-light);
     text-decoration: none;
     margin: 0 10px;
 }
 
 footer a:hover {
-    color: var(--nav-hover-light); /* Use variable */
+    color: var(--nav-hover-light);
 }

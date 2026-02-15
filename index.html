@@ -8,23 +8,24 @@
 </head>
 <body data-page-key="index">
     <nav>
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
+        <a href="index.html" data-i18n="nav_home">Home</a>
+        <a href="about.html" data-i18n="nav_about">About</a>
+        <a href="contact.html" data-i18n="nav_contact">Contact</a>
         <div class="controls-container">
             <button id="theme-toggle">☀️</button>
-            <button id="lang-toggle" data-lang="en">🇰🇷</button> <!-- Default to Korean, toggle to English -->
+            <button id="lang-toggle" data-lang="en">🇰🇷</button>
         </div>
     </nav>
 
     <div class="main-content">
         <h1 data-i18n="index_title">Find Your Next Read</h1>
-        <p data-i18n="index_description">Spin the wheel to get a random book genre, and we'll recommend some great books for you to check out!</p>
-        <div class="roulette-container">
-            <canvas id="roulette-wheel" width="400" height="400"></canvas>
-            <button id="spin-button" data-i18n="spin_button_text">Spin</button>
+        <p data-i18n="index_description">Choose a book genre, and we'll recommend some great books for you to check out!</p>
+        
+        <div id="genre-selection-container">
+            <!-- Genre buttons will be inserted here by JavaScript -->
         </div>
-        <h2 id="result" data-i18n="result_text"></h2>
+
+        <h2 id="result" data-i18n="result_text_prefix"></h2>
         <div id="recommendations">
             <h3 data-i18n="recommendations_title">Top 5 Recommendations:</h3>
             <ul id="book-list"></ul>
