@@ -37,3 +37,24 @@ body {
     margin-top: 20px;
     font-size: 2em;
 }
+
+#recommendations {
+    display: none;
+    margin-top: 20px;
+    width: 80%;
+    max-width: 600px;
+    text-align: center;
+}
+
+#book-list {
+    list-style: none;
+    padding: 0;
+}
+
+#book-list li {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
