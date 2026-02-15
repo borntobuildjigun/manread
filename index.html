@@ -7,15 +7,29 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="roulette-container">
-        <canvas id="roulette-wheel" width="400" height="400"></canvas>
-        <button id="spin-button">Spin</button>
+    <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="main-content">
+        <h1>Find Your Next Read</h1>
+        <p>Spin the wheel to get a random book genre, and we'll recommend some great books for you to check out!</p>
+        <div class="roulette-container">
+            <canvas id="roulette-wheel" width="400" height="400"></canvas>
+            <button id="spin-button">Spin</button>
+        </div>
+        <h2 id="result"></h2>
+        <div id="recommendations">
+            <h3>Top 5 Recommendations:</h3>
+            <ul id="book-list"></ul>
+        </div>
     </div>
-    <h1 id="result"></h1>
-    <div id="recommendations">
-        <h2>Top 5 Recommendations:</h2>
-        <ul id="book-list"></ul>
-    </div>
+
+    <footer>
+        <a href="privacy.html">Privacy Policy</a>
+    </footer>
 
     <script src="main.js"></script>
 </body>

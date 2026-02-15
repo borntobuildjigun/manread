@@ -2,21 +2,58 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
+    justify-content: flex-start; /* Align to start for better multi-page layout */
+    min-height: 100vh; /* Use min-height for content to push footer down */
     margin: 0;
     background-color: #f0f0f0;
     font-family: sans-serif;
+    color: #333;
 }
 
+nav {
+    width: 100%;
+    background-color: #333;
+    padding: 15px 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: #ffd700;
+}
+
+.main-content {
+    flex-grow: 1; /* Allows content to take available space */
+    width: 90%;
+    max-width: 800px;
+    background-color: #fff;
+    padding: 30px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center; /* Center content within main-content */
+}
+
+/* Specific styles for index.html roulette */
 .roulette-container {
     position: relative;
     width: 400px;
     height: 400px;
+    margin: 20px auto; /* Center the roulette */
 }
 
 #roulette-wheel {
     transition: transform 4s ease-out;
+    border: 2px solid #ccc; /* Add a border for clarity */
+    border-radius: 50%; /* Ensure it's perfectly round */
 }
 
 #spin-button {
@@ -31,30 +68,138 @@ body {
     border: 5px solid #fff;
     background-color: #333;
     color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+#spin-button:hover {
+    background-color: #555;
 }
 
 #result {
     margin-top: 20px;
     font-size: 2em;
+    color: #007bff;
+    font-weight: bold;
 }
 
 #recommendations {
-    display: none;
-    margin-top: 20px;
-    width: 80%;
-    max-width: 600px;
-    text-align: center;
+    display: none; /* Hidden by default */
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+#recommendations h3 {
+    font-size: 1.5em;
+    color: #555;
+    margin-bottom: 15px;
 }
 
 #book-list {
     list-style: none;
     padding: 0;
+    width: 100%;
+    max-width: 500px; /* Constrain width of book list */
+    margin: 0 auto; /* Center the list */
 }
 
 #book-list li {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    text-align: left; /* Align text within list items */
+    transition: background-color 0.3s ease;
+}
+
+#book-list li:hover {
+    background-color: #eef;
+}
+
+#book-list li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+    display: block; /* Make the whole list item clickable */
+}
+
+#book-list li a:hover {
+    text-decoration: underline;
+}
+
+/* Book Detail Page Styles */
+.main-content.book-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: left; /* Default text alignment for details */
+}
+
+.book-detail h1 {
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.book-detail .author {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.book-content {
+    display: flex;
+    flex-wrap: wrap; /* Allow content to wrap on smaller screens */
+    gap: 30px;
+    margin-top: 20px;
+    justify-content: center; /* Center items when wrapped */
+}
+
+.book-cover {
+    flex-shrink: 0; /* Don't shrink cover image */
+}
+
+.book-cover img {
+    max-width: 250px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.book-summary {
+    flex-grow: 1; /* Allow summary to take remaining space */
+    max-width: 500px; /* Limit summary width */
+    text-align: left;
+}
+
+.book-summary h2 {
+    color: #555;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.book-summary p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+
+footer {
+    width: 100%;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: 20px; /* Space above footer */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+}
+
+footer a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+footer a:hover {
+    color: #ffd700;
 }
