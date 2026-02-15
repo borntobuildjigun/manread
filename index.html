@@ -6,29 +6,33 @@
     <title>Book Genre Roulette</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-page-key="index">
     <nav>
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
+        <div class="controls-container">
+            <button id="theme-toggle">☀️</button>
+            <button id="lang-toggle" data-lang="en">🇰🇷</button> <!-- Default to Korean, toggle to English -->
+        </div>
     </nav>
 
     <div class="main-content">
-        <h1>Find Your Next Read</h1>
-        <p>Spin the wheel to get a random book genre, and we'll recommend some great books for you to check out!</p>
+        <h1 data-i18n="index_title">Find Your Next Read</h1>
+        <p data-i18n="index_description">Spin the wheel to get a random book genre, and we'll recommend some great books for you to check out!</p>
         <div class="roulette-container">
             <canvas id="roulette-wheel" width="400" height="400"></canvas>
-            <button id="spin-button">Spin</button>
+            <button id="spin-button" data-i18n="spin_button_text">Spin</button>
         </div>
-        <h2 id="result"></h2>
+        <h2 id="result" data-i18n="result_text"></h2>
         <div id="recommendations">
-            <h3>Top 5 Recommendations:</h3>
+            <h3 data-i18n="recommendations_title">Top 5 Recommendations:</h3>
             <ul id="book-list"></ul>
         </div>
     </div>
 
     <footer>
-        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy.html" data-i18n="privacy_link_text">Privacy Policy</a>
     </footer>
 
     <script src="main.js"></script>
