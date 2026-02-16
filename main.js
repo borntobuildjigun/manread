@@ -1,26 +1,60 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Common elements and initial setup ---
-    const htmlElement = document.documentElement;
-    const themeToggle = document.getElementById('theme-toggle');
-    const langToggle = document.getElementById('lang-toggle');
-    const genreSelectionContainer = document.getElementById('genre-selection-container');
-    const recommendationsElement = document.getElementById('recommendations');
-    const bookListElement = document.getElementById('book-list');
-    const resultElement = document.getElementById('result'); // For displaying selected genre
-
-    const genres = [
-        'Fantasy', 'Sci-Fi', 'Mystery', 'Thriller', 'Romance', 'Horror', 'Historical', 'Non-Fiction'
-    ];
-
     const bookDatabase = {
-        'Fantasy': ['The Hobbit', 'A Wizard of Earthsea', 'The Name of the Wind', 'Mistborn: The Final Empire', 'The Lies of Locke Lamora'],
-        'Sci-Fi': ['Dune', 'Ender\'s Game', 'Neuromancer', 'The Hitchhiker\'s Guide to the Galaxy', 'Foundation'],
-        'Mystery': ['The Adventures of Sherlock Holmes', 'And Then There Were None', 'The Big Sleep', 'Gone Girl', 'The Girl with the Dragon Tattoo'],
-        'Thriller': ['The Silence of the Lambs', 'The Da Vinci Code', 'The Girl on the Train', 'Before I Go to Sleep', 'The Guest List'],
-        'Romance': ['Pride and Prejudice', 'Outlander', 'The Notebook', 'Me Before You', 'The Hating Game'],
-        'Horror': ['The Shining', 'It', 'Dracula', 'Frankenstein', 'The Haunting of Hill House'],
-        'Historical': ['The Other Boleyn Girl', 'All the Light We Cannot See', 'The Book Thief', 'The Nightingale', 'Wolf Hall'],
-        'Non-Fiction': ['Sapiens: A Brief History of Humankind', 'Educated', 'The Immortal Life of Henrietta Lacks', 'Thinking, Fast and Slow', 'Becoming']
+        'Fantasy': [
+            { title: 'The Hobbit', cover: 'https://m.media-amazon.com/images/I/710+H+Q7+aL._AC_UF1000,1000_QL80_.jpg' },
+            { title: 'A Wizard of Earthsea', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1659354924l/13642.jpg' },
+            { title: 'The Name of the Wind', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1535964893l/186074.jpg' },
+            { title: 'Mistborn: The Final Empire', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1661031993l/68428.jpg' },
+            { title: 'The Lies of Locke Lamora', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1628701267l/29588376.jpg' }
+        ],
+        'Sci-Fi': [
+            { title: 'Dune', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414l/44767458.jpg' },
+            { title: 'Ender\'s Game', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1408303131l/375802.jpg' },
+            { title: 'Neuromancer', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554437240l/6088007-neuromancer.jpg' },
+            { title: 'The Hitchhiker\'s Guide to the Galaxy', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1653034292l/11.jpg' },
+            { title: 'Foundation', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1417958277l/29579.jpg' }
+        ],
+        'Mystery': [
+            { title: 'The Adventures of Sherlock Holmes', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1164045553l/3590.jpg' },
+            { title: 'And Then There Were None', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1638425885l/16299.jpg' },
+            { title: 'The Big Sleep', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1599818399l/2052.jpg' },
+            { title: 'Gone Girl', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554086139l/19288043.jpg' },
+            { title: 'The Girl with the Dragon Tattoo', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1684638853l/2429135.jpg' }
+        ],
+        'Thriller': [
+            { title: 'The Silence of the Lambs', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1630469183l/23807.jpg' },
+            { title: 'The Da Vinci Code', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1652310444l/968.jpg' },
+            { title: 'The Girl on the Train', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1572984920l/22557272.jpg' },
+            { title: 'Before I Go to Sleep', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1358213329l/9736930.jpg' },
+            { title: 'The Guest List', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1569249757l/51932637.jpg' }
+        ],
+        'Romance': [
+            { title: 'Pride and Prejudice', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1385067320l/1885.jpg' },
+            { title: 'Outlander', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1630386345l/10964.jpg' },
+            { title: 'The Notebook', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1385068744l/3.jpg' },
+            { title: 'Me Before You', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1357108752l/15501596.jpg' },
+            { title: 'The Hating Game', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1483017594l/27213238.jpg' }
+        ],
+        'Horror': [
+            { title: 'The Shining', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1511288003l/11588.jpg' },
+            { title: 'It', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1678235255l/830502.jpg' },
+            { title: 'Dracula', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1387151694l/17245.jpg' },
+            { title: 'Frankenstein', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1669318812l/18490.jpg' },
+            { title: 'The Haunting of Hill House', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1455044432l/89717.jpg' }
+        ],
+        'Historical': [
+            { title: 'The Other Boleyn Girl', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1629007367l/37470.jpg' },
+            { title: 'All the Light We Cannot See', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1451445646l/18143977.jpg' },
+            { title: 'The Book Thief', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1522157426l/19063.jpg' },
+            { title: 'The Nightingale', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1451446315l/21853621.jpg' },
+            { title: 'Wolf Hall', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1574265313l/6101138-wolf-hall.jpg' }
+        ],
+        'Non-Fiction': [
+            { title: 'Sapiens: A Brief History of Humankind', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1420585954l/23692271.jpg' },
+            { title: 'Educated', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1506026631l/35133922.jpg' },
+            { title: 'The Immortal Life of Henrietta Lacks', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1603173789l/6493208.jpg' },
+            { title: 'Thinking, Fast and Slow', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1317793965l/11468377.jpg' },
+            { title: 'Becoming', cover: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1528206996l/38746485.jpg' }
+        ]
     };
 
     // Translations object
@@ -195,10 +229,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             bookListElement.innerHTML = '';
             books.forEach(book => {
-                const li = document.createElement('li');
-                const bookSlug = book.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                li.innerHTML = `<a href="book-${bookSlug}.html">${book}</a>`; 
-                bookListElement.appendChild(li);
+                const bookItem = document.createElement('div');
+                bookItem.classList.add('book-item');
+
+                const bookSlug = book.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                
+                bookItem.innerHTML = `
+                    <a href="book-${bookSlug}.html">
+                        <img src="${book.cover}" alt="${book.title} cover">
+                        <p>${book.title}</p>
+                    </a>
+                `; 
+                bookListElement.appendChild(bookItem);
             });
             recommendationsElement.style.display = 'block';
         }

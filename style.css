@@ -148,25 +148,59 @@ nav a:hover {
 }
 
 #book-list {
+    display: flex;
+    overflow-x: auto;
+    padding: 20px 10px;
     list-style: none;
-    padding: 0;
     width: 100%;
-    max-width: 500px;
     margin: 0 auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--button-bg-light) var(--bg-color-light);
 }
 
-#book-list li {
-    background-color: var(--card-bg-light);
-    border: 1px solid var(--border-color-light);
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    text-align: left;
-    transition: background-color 0.3s ease;
+#book-list::-webkit-scrollbar {
+    height: 10px;
 }
 
-#book-list li:hover {
-    background-color: var(--bg-color-light);
+#book-list::-webkit-scrollbar-track {
+    background: var(--bg-color-light);
+    border-radius: 5px;
+}
+
+#book-list::-webkit-scrollbar-thumb {
+    background-color: var(--button-bg-light);
+    border-radius: 5px;
+}
+
+.book-item {
+    flex: 0 0 160px;
+    margin: 0 10px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.book-item:hover {
+    transform: scale(1.05);
+}
+
+.book-item a {
+    text-decoration: none;
+    color: var(--text-color-light);
+}
+
+.book-item img {
+    width: 150px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+}
+
+.book-item p {
+    margin: 0;
+    font-weight: bold;
+    font-size: 0.9em;
 }
 
 #book-list li a {
