@@ -9,10 +9,9 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase 자동 설정 (Reserved SDK) -->
-    <script defer src="/__/firebase/10.7.1/firebase-app-compat.js"></script>
-    <script defer src="/__/firebase/10.7.1/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/init.js?useStaticResources=true"></script>
+    <!-- Firebase SDKs (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div id="app">
@@ -28,12 +27,10 @@
         <div id="feed-view" class="hidden">
             <h1 class="serif">활동의 중심</h1>
             <p style="color:var(--text-muted); margin-bottom:20px;">마을 사람들의 최신 독서 활동입니다.</p>
-            <div id="activity-feed">
-                <!-- 활동 로그가 여기에 표시됩니다 -->
-            </div>
+            <div id="activity-feed"></div>
         </div>
 
-        <!-- 3. 나의 책방 (콘텐츠 영역) -->
+        <!-- 3. 나의 책방 -->
         <div id="bookstore-view" class="hidden">
             <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h1 class="serif" id="user-greeting">나의 책방</h1>
@@ -44,7 +41,7 @@
             <div id="book-list"></div>
         </div>
 
-        <!-- 4. 독서 기록/타이머 (기존 트래커) -->
+        <!-- 4. 독서 기록/타이머 -->
         <div id="tracker-view" class="hidden">
             <button id="back-to-store-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
             <div class="card">

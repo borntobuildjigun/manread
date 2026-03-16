@@ -21,20 +21,18 @@ const nav = document.getElementById('bottom-nav');
 function init() {
     console.log("App Initializing...");
     
-    // Firebase Reserved SDK Check
-    const checkFirebase = setInterval(() => {
-        if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
-            clearInterval(checkFirebase);
-            try {
-                db = firebase.firestore();
-                console.log("Firebase Connected Successfully");
-                startApp();
-            } catch (e) {
-                console.error("Firestore init failed:", e);
-                alert("데이터베이스 초기화에 실패했습니다. (보안 규칙 또는 설정 확인 필요)");
-            }
+    // Explicit Firebase Init (Compatible with both Firebase & GitHub Pages)
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp({ projectId: "manread-74612" });
         }
-    }, 100);
+        db = firebase.firestore();
+        console.log("Firebase Connected");
+        startApp();
+    } catch (e) {
+        console.error("Firebase init failed:", e);
+        alert("Firebase 연결 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    }
 }
 
 function startApp() {
@@ -139,7 +137,7 @@ async function renderFeed() {
         });
     } catch (e) {
         console.error("Feed error:", e);
-        feedList.innerHTML = '<p>활동 피드를 불러오지 못했습니다. 새로고침을 해주세요.</p>';
+        feedList.innerHTML = '<p>활동 피드를 불러오지 못했습니다.</p>';
     }
 }
 
@@ -251,10 +249,7 @@ document.getElementById('add-book-btn').onclick = async () => {
 
 document.getElementById('save-record-btn').onclick = async () => {
     const content = document.getElementById('record-input').value;
-    if (!content) {
-        alert("기록할 내용을 입력해주세요.");
-        return;
-    }
+    if (!content) return;
     
     try {
         await db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records").add({
@@ -263,7 +258,6 @@ document.getElementById('save-record-btn').onclick = async () => {
         
         await logActivity('record', content);
         document.getElementById('record-input').value = '';
-        alert("기록이 저장되었습니다.");
         renderRecords();
     } catch (e) {
         alert("기록 저장 실패: " + e.message);
