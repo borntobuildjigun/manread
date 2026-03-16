@@ -4,6 +4,7 @@ let state = {
     books: JSON.parse(localStorage.getItem('manread_books')) || [],
     trash: JSON.parse(localStorage.getItem('manread_trash')) || [],
     currentBook: null,
+    editingRecordId: null, // 현재 수정 중인 기록의 ID
     timer: {
         interval: null,
         seconds: 0,
@@ -108,6 +109,7 @@ document.getElementById('add-book-btn').addEventListener('click', () => {
 function startReading(index) {
     state.currentBook = state.books[index];
     document.getElementById('current-book-title').innerText = state.currentBook.title;
+    resetRecordInputs();
     renderRecords();
     showView('tracker');
 }
@@ -127,7 +129,10 @@ function renderRecords() {
         div.innerHTML = `
             <div class="record-header">
                 <div class="quote-box serif">${record.content}</div>
-                <button class="btn btn-danger btn-small btn-delete-record" data-index="${index}">삭제</button>
+                <div style="display:flex; gap:4px;">
+                    <button class="btn btn-outline btn-small btn-edit-record" data-index="${index}">수정</button>
+                    <button class="btn btn-danger btn-small btn-delete-record" data-index="${index}">삭제</button>
+                </div>
             </div>
             <div style="margin-top:8px;">
                 <span class="location-tag">${record.page}p</span>
@@ -135,15 +140,34 @@ function renderRecords() {
                 <span class="location-tag">${record.line}줄</span>
             </div>
         `;
+        div.querySelector('.btn-edit-record').addEventListener('click', () => startEditRecord(index));
         div.querySelector('.btn-delete-record').addEventListener('click', () => deleteRecord(index));
-        list.prepend(div); // 최근 기록을 위로
+        list.prepend(div);
     });
+}
+
+function startEditRecord(index) {
+    const record = state.currentBook.records[index];
+    state.editingRecordId = record.id;
+    
+    // 입력창으로 데이터 불러오기
+    document.getElementById('record-input').value = record.content;
+    document.getElementById('page-input').value = record.page;
+    document.getElementById('paragraph-input').value = record.paragraph;
+    document.getElementById('line-input').value = record.line;
+    
+    // 버튼 텍스트 변경
+    const saveBtn = document.getElementById('save-record-btn');
+    saveBtn.innerText = '수정 완료';
+    saveBtn.style.backgroundColor = '#f39c12'; // 수정 모드임을 알리는 색상
+    
+    // 입력창으로 스크롤
+    document.querySelector('.card[style*="background: var(--accent-soft)"]').scrollIntoView({ behavior: 'smooth' });
 }
 
 function deleteRecord(index) {
     if (confirm('이 기록을 삭제하시겠습니까? 휴지통으로 이동합니다.')) {
         const record = state.currentBook.records.splice(index, 1)[0];
-        // 복원을 위해 원래 책의 ID 저장
         record.originalBookId = state.currentBook.id;
         state.trash.push(record);
         saveBooks();
@@ -198,7 +222,7 @@ function restoreRecord(index) {
         alert('기록이 원래 책으로 복원되었습니다.');
     } else {
         alert('기록을 복원할 책을 찾을 수 없습니다.');
-        state.trash.push(record); // 복원 실패 시 다시 휴지통으로
+        state.trash.push(record);
     }
 }
 
@@ -248,31 +272,52 @@ document.getElementById('finish-btn').addEventListener('click', () => {
     }
 });
 
-// Save Record Logic
+// Save/Update Record Logic
 document.getElementById('save-record-btn').addEventListener('click', () => {
     const content = document.getElementById('record-input').value;
     const page = document.getElementById('page-input').value;
     const paragraph = document.getElementById('paragraph-input').value;
     const line = document.getElementById('line-input').value;
 
-    if (content) {
+    if (!content) return;
+
+    if (state.editingRecordId) {
+        // 수정 모드
+        const recordIndex = state.currentBook.records.findIndex(r => r.id === state.editingRecordId);
+        if (recordIndex !== -1) {
+            state.currentBook.records[recordIndex] = {
+                ...state.currentBook.records[recordIndex],
+                content, page, paragraph, line,
+                updatedAt: new Date()
+            };
+            alert('기록이 수정되었습니다.');
+        }
+        state.editingRecordId = null;
+    } else {
+        // 새 기록 추가
         state.currentBook.records.push({ 
             id: Date.now().toString(),
-            content, 
-            page, 
-            paragraph, 
-            line, 
+            content, page, paragraph, line, 
             timestamp: new Date() 
         });
-        saveBooks();
-        renderRecords();
-        // Reset inputs
-        document.getElementById('record-input').value = '';
-        document.getElementById('page-input').value = '';
-        document.getElementById('paragraph-input').value = '';
-        document.getElementById('line-input').value = '';
     }
+
+    saveBooks();
+    renderRecords();
+    resetRecordInputs();
 });
+
+function resetRecordInputs() {
+    state.editingRecordId = null;
+    document.getElementById('record-input').value = '';
+    document.getElementById('page-input').value = '';
+    document.getElementById('paragraph-input').value = '';
+    document.getElementById('line-input').value = '';
+    
+    const saveBtn = document.getElementById('save-record-btn');
+    saveBtn.innerText = '기록하기';
+    saveBtn.style.backgroundColor = ''; // 원래 색상으로 복구
+}
 
 document.getElementById('back-btn').addEventListener('click', () => {
     if (state.timer.isRunning) {
