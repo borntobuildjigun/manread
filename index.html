@@ -23,31 +23,30 @@
             <button id="login-btn" class="btn" style="width: 100%;">참여하기</button>
         </div>
 
-        <!-- 2. 메인 피드 (활동의 중심) -->
+        <!-- 2. 메인 피드 -->
         <div id="feed-view" class="hidden">
             <h1 class="serif">활동의 중심</h1>
             <p style="color:var(--text-muted); margin-bottom:20px;">마을 사람들의 최신 독서 활동입니다.</p>
             <div id="activity-feed"></div>
         </div>
 
-        <!-- 3. 마을 사람들 (유저 목록) -->
+        <!-- 3. 마을 사람들 -->
         <div id="people-view" class="hidden">
             <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h1 class="serif" style="margin:0;">마을 사람들</h1>
                 <button id="register-person-btn" class="btn btn-outline btn-small">+ 이웃 등록</button>
             </header>
             <p style="color:var(--text-muted); margin-bottom:20px;">함께 책을 읽고 있는 이웃들입니다.</p>
-            <div id="people-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <!-- 사람 리스트가 여기에 표시됩니다 -->
-            </div>
+            <div id="people-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"></div>
         </div>
 
-        <!-- 4. 책방 (개인 영역) -->
+        <!-- 4. 책방 -->
         <div id="bookstore-view" class="hidden">
             <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h1 class="serif" id="user-greeting">나의 책방</h1>
-                    <div id="owner-actions" class="hidden">
+                    <div id="owner-actions" class="hidden" style="display: flex; gap: 8px;">
+                        <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️</button>
                         <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
                     </div>
                 </div>
@@ -68,17 +67,28 @@
                     </div>
                 </div>
                 <div id="record-entry" class="card hidden" style="background: var(--accent-soft); border: none;">
-                    <h3 style="margin-top:0;">📝 순간의 기록</h3>
+                    <h3 id="record-entry-title" style="margin-top:0;">📝 순간의 기록</h3>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
                         <input type="number" id="page-input" placeholder="페이지">
                         <input type="number" id="paragraph-input" placeholder="문단">
                         <input type="number" id="line-input" placeholder="줄">
                     </div>
                     <textarea id="record-input" placeholder="인상 깊은 문장이나 생각을 적어보세요..." rows="4"></textarea>
-                    <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="save-record-btn" class="btn" style="flex: 2;">기록하기</button>
+                        <button id="cancel-edit-btn" class="btn btn-outline hidden" style="flex: 1;">취소</button>
+                    </div>
                 </div>
                 <div id="records-list" style="margin-top: 24px;"></div>
             </div>
+        </div>
+
+        <!-- 6. 휴지통 뷰 -->
+        <div id="trash-view" class="hidden">
+            <button id="back-from-trash-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
+            <h1 class="serif">휴지통</h1>
+            <p style="color:var(--text-muted); margin-bottom:20px;">삭제된 기록들입니다. 복원하거나 영구 삭제할 수 있습니다.</p>
+            <div id="trash-list"></div>
         </div>
 
         <!-- 하단 내비게이션 -->
