@@ -1,16 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manread Initialized</title>
+    <title>Manread - 기록하는 즐거움</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
+    <!-- Korean Fonts -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <h1>Welcome to Manread</h1>
-        <p>This project has been initialized.</p>
+        <!-- 1. Login View -->
+        <div id="login-view" class="card">
+            <h1 class="serif">반가워요 👋</h1>
+            <p>닉네임을 입력하고 독서를 시작하세요.</p>
+            <input type="text" id="nickname-input" placeholder="나만의 닉네임" maxlength="15">
+            <button id="login-btn" class="btn" style="width: 100%;">시작하기</button>
+        </div>
+
+        <!-- 2. Dashboard View (Hidden initially) -->
+        <div id="dashboard-view" class="hidden">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1 class="serif" id="user-greeting">안녕, 님!</h1>
+                <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+            </header>
+            
+            <div id="book-list">
+                <!-- Book items will be injected here -->
+            </div>
+        </div>
+
+        <!-- 3. Reading Tracker View (Hidden initially) -->
+        <div id="tracker-view" class="hidden">
+            <button id="back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 돌아가기</button>
+            <div class="card">
+                <h2 id="current-book-title" class="serif">읽고 있는 책</h2>
+                <div class="timer-display" id="timer">00:00:00</div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                    <button id="timer-btn" class="btn" style="flex: 1;">읽기 시작</button>
+                    <button id="finish-btn" class="btn btn-outline" style="flex: 1;">독서 종료</button>
+                </div>
+
+                <div class="card" style="background: var(--accent-soft); border: none;">
+                    <h3 style="margin-top:0;">📝 순간의 기록</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
+                        <input type="number" id="page-input" placeholder="페이지">
+                        <input type="number" id="paragraph-input" placeholder="문단">
+                        <input type="number" id="line-input" placeholder="줄">
+                    </div>
+                    <textarea id="record-input" placeholder="인상 깊은 문장이나 생각을 적어보세요..." rows="4"></textarea>
+                    <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
+                </div>
+
+                <div id="records-list" style="margin-top: 24px;">
+                    <!-- Saved records will be shown here -->
+                </div>
+            </div>
+        </div>
     </div>
     <script src="main.js"></script>
 </body>
