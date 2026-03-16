@@ -3,37 +3,33 @@
     --card-bg: #ffffff;
     --text-main: #2c3e50;
     --text-muted: #7f8c8d;
-    --accent: #5d8aa8; /* Muted Air Force Blue */
+    --accent: #5d8aa8;
     --accent-soft: #eef2f5;
     --border: #eaedf0;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+    font-family: 'Pretendard', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
     margin: 0;
-    line-height: 1.6;
+    padding-bottom: 80px; /* 내비바 공간 */
 }
 
 #app {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
-    min-height: 100vh;
 }
 
-/* Typography */
-h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
 .serif { font-family: 'Noto Serif KR', serif; }
 
-/* Components */
 .card {
     background: var(--card-bg);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
+    padding: 20px;
+    margin-bottom: 16px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
 }
@@ -44,7 +40,6 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
     border: none;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
     background: var(--accent);
     color: white;
 }
@@ -55,22 +50,59 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
     color: var(--accent);
 }
 
-.btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
 input, textarea {
     width: 100%;
     padding: 12px;
     border-radius: 10px;
     border: 1.5px solid var(--border);
-    background: #fcfcfc;
     margin-bottom: 12px;
     box-sizing: border-box;
 }
 
-input:focus { outline: none; border-color: var(--accent); }
-
-/* Layouts */
 .hidden { display: none !important; }
+
+/* Navigation */
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    z-index: 100;
+}
+
+.nav-item {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: var(--accent);
+}
+
+/* Feed */
+.feed-item {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+}
+
+.feed-user {
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+}
 
 .timer-display {
     font-size: 3rem;
@@ -78,38 +110,11 @@ input:focus { outline: none; border-color: var(--accent); }
     color: var(--accent);
     text-align: center;
     margin: 20px 0;
-    font-variant-numeric: tabular-nums;
 }
 
 .quote-box {
     border-left: 4px solid var(--accent);
     padding-left: 16px;
     font-style: italic;
-    color: var(--text-main);
     margin: 10px 0;
 }
-
-.btn-danger {
-    background: #e74c3c;
-    color: white;
-}
-
-.btn-small {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    border-radius: 8px;
-}
-
-.record-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-}
-
-.trash-badge {
-    background: #fdf2f2;
-    color: #e74c3c;
-    border: 1px solid #fee2e2;
-}
-

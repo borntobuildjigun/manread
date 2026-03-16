@@ -3,58 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manread - 우리들의 책방</title>
+    <title>Manread - 활동의 중심</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase Reserved SDKs (Automatic Init) -->
+    <!-- Firebase 자동 설정 (Reserved SDK) -->
     <script defer src="/__/firebase/10.7.1/firebase-app-compat.js"></script>
     <script defer src="/__/firebase/10.7.1/firebase-firestore-compat.js"></script>
     <script defer src="/__/firebase/init.js?useStaticResources=true"></script>
 </head>
 <body>
     <div id="app">
-        <!-- 1. Home View -->
-        <div id="home-view" class="card">
-            <h1 class="serif">우리들의 책방 📚</h1>
-            <p>누구의 책방에 방문해볼까요?</p>
-            <div id="user-list" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 24px;">
-            <p>나만의 책방 만들기</p>
-            <input type="text" id="nickname-input" placeholder="새로운 닉네임" maxlength="15">
+        <!-- 1. 로그인 화면 -->
+        <div id="login-view" class="card">
+            <h1 class="serif">반가워요 👋</h1>
+            <p>닉네임을 입력하고 우리들의 책방에 참여하세요.</p>
+            <input type="text" id="nickname-input" placeholder="나만의 닉네임" maxlength="15">
             <button id="login-btn" class="btn" style="width: 100%;">참여하기</button>
         </div>
 
-        <!-- 2. Dashboard View -->
-        <div id="dashboard-view" class="hidden">
-            <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
-                <button id="go-home-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); text-align:left; padding:0;">← 마을로 돌아가기</button>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h1 class="serif" id="user-greeting">님의 책방</h1>
-                    <div id="owner-actions" style="display: flex; gap: 8px;" class="hidden">
-                        <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️</button>
-                        <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
-                    </div>
+        <!-- 2. 메인 피드 (활동의 중심) -->
+        <div id="feed-view" class="hidden">
+            <h1 class="serif">활동의 중심</h1>
+            <p style="color:var(--text-muted); margin-bottom:20px;">마을 사람들의 최신 독서 활동입니다.</p>
+            <div id="activity-feed">
+                <!-- 활동 로그가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 3. 나의 책방 (콘텐츠 영역) -->
+        <div id="bookstore-view" class="hidden">
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1 class="serif" id="user-greeting">나의 책방</h1>
+                <div id="owner-actions" class="hidden">
+                    <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
                 </div>
             </header>
             <div id="book-list"></div>
         </div>
 
-        <!-- 3. Reading Tracker View -->
+        <!-- 4. 독서 기록/타이머 (기존 트래커) -->
         <div id="tracker-view" class="hidden">
-            <button id="back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
+            <button id="back-to-store-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
             <div class="card">
                 <h2 id="current-book-title" class="serif">읽고 있는 책</h2>
-                <div id="reading-timer-section" class="hidden">
+                <div id="timer-section" class="hidden">
                     <div class="timer-display" id="timer">00:00:00</div>
                     <div style="display: flex; gap: 10px; margin-bottom: 24px;">
                         <button id="timer-btn" class="btn" style="flex: 1;">읽기 시작</button>
                         <button id="finish-btn" class="btn btn-outline" style="flex: 1;">독서 종료</button>
                     </div>
                 </div>
-                <div id="record-entry-section" class="card hidden" style="background: var(--accent-soft); border: none;">
+                <div id="record-entry" class="card hidden" style="background: var(--accent-soft); border: none;">
                     <h3 style="margin-top:0;">📝 순간의 기록</h3>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
                         <input type="number" id="page-input" placeholder="페이지">
@@ -68,12 +70,11 @@
             </div>
         </div>
 
-        <!-- 4. Trash View -->
-        <div id="trash-view" class="hidden">
-            <button id="trash-back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
-            <h1 class="serif">휴지통</h1>
-            <div id="trash-list"></div>
-        </div>
+        <!-- 하단 내비게이션 -->
+        <nav id="bottom-nav" class="hidden">
+            <button class="nav-item active" data-view="feed">🏠 활동</button>
+            <button class="nav-item" data-view="bookstore">📚 내 책방</button>
+        </nav>
     </div>
     <script src="main.js"></script>
 </body>
