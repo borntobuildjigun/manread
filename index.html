@@ -69,6 +69,11 @@
                 </div>
                 <div id="record-entry" class="card hidden" style="background: var(--accent-soft); border: none;">
                     <h3 style="margin-top:0;">📝 순간의 기록</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
+                        <input type="number" id="page-input" placeholder="페이지">
+                        <input type="number" id="paragraph-input" placeholder="문단">
+                        <input type="number" id="line-input" placeholder="줄">
+                    </div>
                     <textarea id="record-input" placeholder="인상 깊은 문장이나 생각을 적어보세요..." rows="4"></textarea>
                     <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
                 </div>

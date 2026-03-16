@@ -125,6 +125,7 @@ async function renderFeed() {
                     ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}
                 </div>
                 ${act.content ? `<div class="quote-box serif">${act.content}</div>` : ''}
+                ${act.page ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${act.page}p 부근</div>` : ''}
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
                     ${act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : '방금 전'}
                 </div>
@@ -201,7 +202,7 @@ async function enterBookstore(nickname) {
     
     showView('bookstore');
     if (isOwner) updateNavUI('bookstore');
-    else updateNavUI('people'); // 다른 사람 방문 중엔 마을 탭 활성화
+    else updateNavUI('people');
 
     renderBooks(nickname);
 }
@@ -256,7 +257,7 @@ window.openTracker = async (bid, title) => {
     renderRecords();
 };
 
-async function logActivity(type, content) {
+async function logActivity(type, content, page) {
     if (!db || !state.currentBook) return;
     await db.collection("activities").add({
         user: state.myNickname,
@@ -264,6 +265,7 @@ async function logActivity(type, content) {
         bookId: state.currentBook.id,
         bookTitle: state.currentBook.title,
         content: content || null,
+        page: page || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 }
@@ -283,15 +285,27 @@ document.getElementById('add-book-btn').onclick = async () => {
 
 document.getElementById('save-record-btn').onclick = async () => {
     const content = document.getElementById('record-input').value;
-    if (!content) return;
+    const page = document.getElementById('page-input').value || 0;
+    const paragraph = document.getElementById('paragraph-input').value || 0;
+    const line = document.getElementById('line-input').value || 0;
+
+    if (!content) {
+        alert("기록할 내용을 입력해주세요.");
+        return;
+    }
     
-    await db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records").add({
-        content, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    await logActivity('record', content);
-    document.getElementById('record-input').value = '';
-    renderRecords();
+    try {
+        await db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records").add({
+            content, page, paragraph, line, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await logActivity('record', content, page);
+        resetRecordInputs();
+        alert("기록이 저장되었습니다.");
+        renderRecords();
+    } catch (e) {
+        alert("기록 저장 실패: " + e.message);
+    }
 };
 
 async function renderRecords() {
@@ -302,11 +316,26 @@ async function renderRecords() {
         querySnapshot.forEach(doc => {
             const rec = doc.data();
             const div = document.createElement('div');
-            div.className = 'card quote-box serif';
-            div.innerText = rec.content;
+            div.className = 'card';
+            div.style.marginBottom = '12px';
+            div.innerHTML = `
+                <div class="quote-box serif">${rec.content}</div>
+                <div style="margin-top:8px;">
+                    <span style="font-size:0.8rem; color:var(--text-muted); background:var(--accent-soft); padding:2px 8px; border-radius:4px;">
+                        ${rec.page}p ${rec.paragraph}문단 ${rec.line}줄
+                    </span>
+                </div>
+            `;
             list.appendChild(div);
         });
     } catch (e) { /* ignore */ }
+}
+
+function resetRecordInputs() {
+    document.getElementById('record-input').value = '';
+    document.getElementById('page-input').value = '';
+    document.getElementById('paragraph-input').value = '';
+    document.getElementById('line-input').value = '';
 }
 
 document.getElementById('back-to-store-btn').onclick = () => enterBookstore(state.currentStoreOwner);
