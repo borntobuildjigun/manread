@@ -65,12 +65,33 @@ function renderDashboard() {
                     <h3 class="serif" style="margin:0;">${book.title}</h3>
                     <p style="margin:4px 0; color:var(--text-muted);">${book.author}</p>
                 </div>
-                <button class="btn btn-outline btn-start-reading" data-index="${index}">읽기</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline btn-small btn-edit-book" data-index="${index}">수정</button>
+                    <button class="btn btn-outline btn-start-reading" data-index="${index}">읽기</button>
+                </div>
             </div>
         `;
+        div.querySelector('.btn-edit-book').addEventListener('click', (e) => {
+            e.stopPropagation();
+            editBook(index);
+        });
         div.querySelector('.btn-start-reading').addEventListener('click', () => startReading(index));
         list.appendChild(div);
     });
+}
+
+function editBook(index) {
+    const book = state.books[index];
+    const newTitle = prompt('수정할 책 제목을 입력하세요:', book.title);
+    const newAuthor = prompt('수정할 저자를 입력하세요:', book.author);
+    
+    if (newTitle && newAuthor) {
+        state.books[index].title = newTitle.trim();
+        state.books[index].author = newAuthor.trim();
+        saveBooks();
+        renderDashboard();
+        alert('책 정보가 수정되었습니다.');
+    }
 }
 
 document.getElementById('add-book-btn').addEventListener('click', () => {
