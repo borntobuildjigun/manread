@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manread - 활동의 중심</title>
+    <title>Manread - 우리들의 책방</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -30,18 +30,29 @@
             <div id="activity-feed"></div>
         </div>
 
-        <!-- 3. 나의 책방 -->
+        <!-- 3. 마을 사람들 (유저 목록) -->
+        <div id="people-view" class="hidden">
+            <h1 class="serif">마을 사람들</h1>
+            <p style="color:var(--text-muted); margin-bottom:20px;">함께 책을 읽고 있는 이웃들입니다.</p>
+            <div id="people-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <!-- 사람 리스트가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 4. 책방 (개인 영역) -->
         <div id="bookstore-view" class="hidden">
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h1 class="serif" id="user-greeting">나의 책방</h1>
-                <div id="owner-actions" class="hidden">
-                    <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+            <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 class="serif" id="user-greeting">나의 책방</h1>
+                    <div id="owner-actions" class="hidden">
+                        <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+                    </div>
                 </div>
             </header>
             <div id="book-list"></div>
         </div>
 
-        <!-- 4. 독서 기록/타이머 -->
+        <!-- 5. 독서 기록/타이머 -->
         <div id="tracker-view" class="hidden">
             <button id="back-to-store-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
             <div class="card">
@@ -55,11 +66,6 @@
                 </div>
                 <div id="record-entry" class="card hidden" style="background: var(--accent-soft); border: none;">
                     <h3 style="margin-top:0;">📝 순간의 기록</h3>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
-                        <input type="number" id="page-input" placeholder="페이지">
-                        <input type="number" id="paragraph-input" placeholder="문단">
-                        <input type="number" id="line-input" placeholder="줄">
-                    </div>
                     <textarea id="record-input" placeholder="인상 깊은 문장이나 생각을 적어보세요..." rows="4"></textarea>
                     <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
                 </div>
@@ -69,9 +75,13 @@
 
         <!-- 하단 내비게이션 -->
         <nav id="bottom-nav" class="hidden">
-            <button class="nav-item active" data-view="feed">
+            <button class="nav-item" data-view="feed">
                 <span class="nav-icon">🏠</span>
                 <span>활동</span>
+            </button>
+            <button class="nav-item" data-view="people">
+                <span class="nav-icon">🏘️</span>
+                <span>마을</span>
             </button>
             <button class="nav-item" data-view="bookstore">
                 <span class="nav-icon">📚</span>
