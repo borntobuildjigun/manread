@@ -3,51 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manread - 기록하는 즐거움</title>
+    <title>Manread - 우리들의 책방</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
-    <!-- Korean Fonts -->
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (Modular) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+      }
+    }
+    </script>
 </head>
 <body>
     <div id="app">
-        <!-- 1. Login View -->
-        <div id="login-view" class="card">
-            <h1 class="serif">반가워요 👋</h1>
-            <p>닉네임을 입력하고 독서를 시작하세요.</p>
-            <input type="text" id="nickname-input" placeholder="나만의 닉네임" maxlength="15">
-            <button id="login-btn" class="btn" style="width: 100%;">시작하기</button>
+        <!-- 1. Home View (User List & Login) -->
+        <div id="home-view" class="card">
+            <h1 class="serif">우리들의 책방 📚</h1>
+            <p>누구의 책방에 방문해볼까요?</p>
+            
+            <div id="user-list" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Users will be listed here as buttons -->
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 24px;">
+            
+            <p>나만의 책방 만들기</p>
+            <input type="text" id="nickname-input" placeholder="새로운 닉네임" maxlength="15">
+            <button id="login-btn" class="btn" style="width: 100%;">참여하기</button>
         </div>
 
-        <!-- 2. Dashboard View (Hidden initially) -->
+        <!-- 2. Dashboard View (Bookstore) -->
         <div id="dashboard-view" class="hidden">
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h1 class="serif" id="user-greeting">안녕, 님!</h1>
-                <div style="display: flex; gap: 8px;">
-                    <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️ 휴지통</button>
-                    <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+            <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                <button id="go-home-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); text-align:left; padding:0;">← 마을로 돌아가기</button>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 class="serif" id="user-greeting">님의 책방</h1>
+                    <div id="owner-actions" style="display: flex; gap: 8px;" class="hidden">
+                        <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️</button>
+                        <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+                    </div>
                 </div>
             </header>
             
-            <div id="book-list">
-                <!-- Book items will be injected here -->
-            </div>
+            <div id="book-list"></div>
         </div>
 
-        <!-- 3. Reading Tracker View (Hidden initially) -->
+        <!-- 3. Reading Tracker View -->
         <div id="tracker-view" class="hidden">
-            <button id="back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 돌아가기</button>
+            <button id="back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
             <div class="card">
                 <h2 id="current-book-title" class="serif">읽고 있는 책</h2>
-                <div class="timer-display" id="timer">00:00:00</div>
-                
-                <div style="display: flex; gap: 10px; margin-bottom: 24px;">
-                    <button id="timer-btn" class="btn" style="flex: 1;">읽기 시작</button>
-                    <button id="finish-btn" class="btn btn-outline" style="flex: 1;">독서 종료</button>
+                <div id="reading-timer-section" class="hidden">
+                    <div class="timer-display" id="timer">00:00:00</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+                        <button id="timer-btn" class="btn" style="flex: 1;">읽기 시작</button>
+                        <button id="finish-btn" class="btn btn-outline" style="flex: 1;">독서 종료</button>
+                    </div>
                 </div>
 
-                <div class="card" style="background: var(--accent-soft); border: none;">
+                <div id="record-entry-section" class="card hidden" style="background: var(--accent-soft); border: none;">
                     <h3 style="margin-top:0;">📝 순간의 기록</h3>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
                         <input type="number" id="page-input" placeholder="페이지">
@@ -58,21 +76,17 @@
                     <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
                 </div>
 
-                <div id="records-list" style="margin-top: 24px;">
-                    <!-- Saved records will be shown here -->
-                </div>
+                <div id="records-list" style="margin-top: 24px;"></div>
             </div>
         </div>
-        <!-- 4. Trash View (Hidden initially) -->
+
+        <!-- 4. Trash View -->
         <div id="trash-view" class="hidden">
-            <button id="trash-back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 돌아가기</button>
+            <button id="trash-back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 책방으로</button>
             <h1 class="serif">휴지통</h1>
-            <p style="color:var(--text-muted);">삭제된 기록들이 보관됩니다. (최근 순)</p>
-            <div id="trash-list">
-                <!-- Deleted records will be shown here -->
-            </div>
+            <div id="trash-list"></div>
         </div>
     </div>
-    <script src="main.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
