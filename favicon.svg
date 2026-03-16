@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Book Cover -->
+  <rect x="15" y="10" width="70" height="80" rx="8" fill="#3b82f6" />
+  <!-- Pages -->
+  <path d="M25 10 v80 h55 c3 0 5-2 5-5 v-70 c0-3-2-5-5-5 h-55z" fill="#ffffff" />
+  <!-- Spine Detail -->
+  <rect x="15" y="10" width="12" height="80" rx="2" fill="#2563eb" />
+  <!-- Decorative lines for "text" -->
+  <rect x="35" y="25" width="40" height="4" rx="2" fill="#cbd5e1" />
+  <rect x="35" y="35" width="40" height="4" rx="2" fill="#cbd5e1" />
+  <rect x="35" y="45" width="25" height="4" rx="2" fill="#cbd5e1" />
+</svg>
