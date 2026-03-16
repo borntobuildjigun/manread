@@ -137,6 +137,31 @@ async function renderFeed() {
 }
 
 // 4. People List (마을 사람들)
+document.getElementById('register-person-btn').addEventListener('click', async () => {
+    if (!db) return;
+    const nickname = prompt('등록할 이웃의 닉네임을 입력하세요:');
+    if (!nickname) return;
+
+    try {
+        const userRef = db.collection("users").doc(nickname);
+        const userSnap = await userRef.get();
+
+        if (userSnap.exists()) {
+            alert("이미 존재하는 닉네임입니다.");
+            return;
+        }
+
+        await userRef.set({ 
+            nickname, 
+            joinedAt: firebase.firestore.FieldValue.serverTimestamp() 
+        });
+        alert(`'${nickname}'님이 마을에 등록되었습니다.`);
+        renderPeopleList();
+    } catch (e) {
+        alert("등록 중 오류 발생: " + e.message);
+    }
+});
+
 async function renderPeopleList() {
     const list = document.getElementById('people-list');
     list.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">마을 주민을 찾는 중...</p>';

@@ -32,7 +32,10 @@
 
         <!-- 3. 마을 사람들 (유저 목록) -->
         <div id="people-view" class="hidden">
-            <h1 class="serif">마을 사람들</h1>
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h1 class="serif" style="margin:0;">마을 사람들</h1>
+                <button id="register-person-btn" class="btn btn-outline btn-small">+ 이웃 등록</button>
+            </header>
             <p style="color:var(--text-muted); margin-bottom:20px;">함께 책을 읽고 있는 이웃들입니다.</p>
             <div id="people-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <!-- 사람 리스트가 여기에 표시됩니다 -->
