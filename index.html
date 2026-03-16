@@ -8,35 +8,26 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Firebase SDK (Modular) -->
-    <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
-      }
-    }
-    </script>
+    
+    <!-- Firebase Reserved SDKs (Automatic Init) -->
+    <script defer src="/__/firebase/10.7.1/firebase-app-compat.js"></script>
+    <script defer src="/__/firebase/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/init.js?useStaticResources=true"></script>
 </head>
 <body>
     <div id="app">
-        <!-- 1. Home View (User List & Login) -->
+        <!-- 1. Home View -->
         <div id="home-view" class="card">
             <h1 class="serif">우리들의 책방 📚</h1>
             <p>누구의 책방에 방문해볼까요?</p>
-            
-            <div id="user-list" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <!-- Users will be listed here as buttons -->
-            </div>
-
+            <div id="user-list" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 24px;">
-            
             <p>나만의 책방 만들기</p>
             <input type="text" id="nickname-input" placeholder="새로운 닉네임" maxlength="15">
             <button id="login-btn" class="btn" style="width: 100%;">참여하기</button>
         </div>
 
-        <!-- 2. Dashboard View (Bookstore) -->
+        <!-- 2. Dashboard View -->
         <div id="dashboard-view" class="hidden">
             <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
                 <button id="go-home-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); text-align:left; padding:0;">← 마을로 돌아가기</button>
@@ -48,7 +39,6 @@
                     </div>
                 </div>
             </header>
-            
             <div id="book-list"></div>
         </div>
 
@@ -64,7 +54,6 @@
                         <button id="finish-btn" class="btn btn-outline" style="flex: 1;">독서 종료</button>
                     </div>
                 </div>
-
                 <div id="record-entry-section" class="card hidden" style="background: var(--accent-soft); border: none;">
                     <h3 style="margin-top:0;">📝 순간의 기록</h3>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px;">
@@ -75,7 +64,6 @@
                     <textarea id="record-input" placeholder="인상 깊은 문장이나 생각을 적어보세요..." rows="4"></textarea>
                     <button id="save-record-btn" class="btn" style="width: 100%;">기록하기</button>
                 </div>
-
                 <div id="records-list" style="margin-top: 24px;"></div>
             </div>
         </div>
@@ -87,6 +75,6 @@
             <div id="trash-list"></div>
         </div>
     </div>
-    <script type="module" src="main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
