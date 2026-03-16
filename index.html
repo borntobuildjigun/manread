@@ -24,7 +24,10 @@
         <div id="dashboard-view" class="hidden">
             <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h1 class="serif" id="user-greeting">안녕, 님!</h1>
-                <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+                <div style="display: flex; gap: 8px;">
+                    <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️ 휴지통</button>
+                    <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+                </div>
             </header>
             
             <div id="book-list">
@@ -58,6 +61,15 @@
                 <div id="records-list" style="margin-top: 24px;">
                     <!-- Saved records will be shown here -->
                 </div>
+            </div>
+        </div>
+        <!-- 4. Trash View (Hidden initially) -->
+        <div id="trash-view" class="hidden">
+            <button id="trash-back-btn" style="background:none; border:none; cursor:pointer; color:var(--text-muted); margin-bottom:12px;">← 돌아가기</button>
+            <h1 class="serif">휴지통</h1>
+            <p style="color:var(--text-muted);">삭제된 기록들이 보관됩니다. (최근 순)</p>
+            <div id="trash-list">
+                <!-- Deleted records will be shown here -->
             </div>
         </div>
     </div>

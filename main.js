@@ -2,6 +2,7 @@
 let state = {
     nickname: localStorage.getItem('manread_nickname') || '',
     books: JSON.parse(localStorage.getItem('manread_books')) || [],
+    trash: JSON.parse(localStorage.getItem('manread_trash')) || [],
     currentBook: null,
     timer: {
         interval: null,
@@ -14,7 +15,8 @@ let state = {
 const views = {
     login: document.getElementById('login-view'),
     dashboard: document.getElementById('dashboard-view'),
-    tracker: document.getElementById('tracker-view')
+    tracker: document.getElementById('tracker-view'),
+    trash: document.getElementById('trash-view')
 };
 
 // Initialization
@@ -75,7 +77,7 @@ document.getElementById('add-book-btn').addEventListener('click', () => {
     const title = prompt('책 제목을 입력하세요:');
     const author = prompt('저자를 입력하세요:');
     if (title && author) {
-        state.books.push({ title, author, records: [] });
+        state.books.push({ id: Date.now().toString(), title, author, records: [] });
         saveBooks();
         renderDashboard();
     }
@@ -97,20 +99,94 @@ function renderRecords() {
         list.innerHTML += '<p style="color:var(--text-muted);">아직 기록이 없어요.</p>';
     }
 
-    state.currentBook.records.slice().reverse().forEach(record => {
+    state.currentBook.records.forEach((record, index) => {
         const div = document.createElement('div');
         div.className = 'card';
         div.style.marginBottom = '12px';
         div.innerHTML = `
-            <div class="quote-box serif">${record.content}</div>
+            <div class="record-header">
+                <div class="quote-box serif">${record.content}</div>
+                <button class="btn btn-danger btn-small btn-delete-record" data-index="${index}">삭제</button>
+            </div>
             <div style="margin-top:8px;">
                 <span class="location-tag">${record.page}p</span>
                 <span class="location-tag">${record.paragraph}문단</span>
                 <span class="location-tag">${record.line}줄</span>
             </div>
         `;
-        list.appendChild(div);
+        div.querySelector('.btn-delete-record').addEventListener('click', () => deleteRecord(index));
+        list.prepend(div); // 최근 기록을 위로
     });
+}
+
+function deleteRecord(index) {
+    if (confirm('이 기록을 삭제하시겠습니까? 휴지통으로 이동합니다.')) {
+        const record = state.currentBook.records.splice(index, 1)[0];
+        // 복원을 위해 원래 책의 ID 저장
+        record.originalBookId = state.currentBook.id;
+        state.trash.push(record);
+        saveBooks();
+        renderRecords();
+    }
+}
+
+// Trash Logic
+document.getElementById('trash-btn').addEventListener('click', () => {
+    showView('trash');
+    renderTrash();
+});
+
+document.getElementById('trash-back-btn').addEventListener('click', () => showView('dashboard'));
+
+function renderTrash() {
+    const list = document.getElementById('trash-list');
+    list.innerHTML = '';
+
+    if (state.trash.length === 0) {
+        list.innerHTML = '<div class="card" style="text-align:center; color:var(--text-muted);">휴지통이 비어 있습니다.</div>';
+    }
+
+    state.trash.forEach((record, index) => {
+        const book = state.books.find(b => b.id === record.originalBookId);
+        const bookTitle = book ? book.title : '삭제된 책';
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">[ ${bookTitle} ]</div>
+            <div class="quote-box serif">${record.content}</div>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+                <button class="btn btn-small btn-restore-record" data-index="${index}">복원</button>
+                <button class="btn btn-danger btn-small btn-perm-delete" data-index="${index}">영구 삭제</button>
+            </div>
+        `;
+        div.querySelector('.btn-restore-record').addEventListener('click', () => restoreRecord(index));
+        div.querySelector('.btn-perm-delete').addEventListener('click', () => permanentlyDeleteRecord(index));
+        list.prepend(div);
+    });
+}
+
+function restoreRecord(index) {
+    const record = state.trash.splice(index, 1)[0];
+    const targetBook = state.books.find(b => b.id === record.originalBookId);
+    
+    if (targetBook) {
+        targetBook.records.push(record);
+        saveBooks();
+        renderTrash();
+        alert('기록이 원래 책으로 복원되었습니다.');
+    } else {
+        alert('기록을 복원할 책을 찾을 수 없습니다.');
+        state.trash.push(record); // 복원 실패 시 다시 휴지통으로
+    }
+}
+
+function permanentlyDeleteRecord(index) {
+    if (confirm('이 기록을 영구적으로 삭제하시겠습니까? 복구할 수 없습니다.')) {
+        state.trash.splice(index, 1);
+        saveBooks();
+        renderTrash();
+    }
 }
 
 // Timer Logic
@@ -159,7 +235,14 @@ document.getElementById('save-record-btn').addEventListener('click', () => {
     const line = document.getElementById('line-input').value;
 
     if (content) {
-        state.currentBook.records.push({ content, page, paragraph, line, timestamp: new Date() });
+        state.currentBook.records.push({ 
+            id: Date.now().toString(),
+            content, 
+            page, 
+            paragraph, 
+            line, 
+            timestamp: new Date() 
+        });
         saveBooks();
         renderRecords();
         // Reset inputs
@@ -180,6 +263,7 @@ document.getElementById('back-btn').addEventListener('click', () => {
 
 function saveBooks() {
     localStorage.setItem('manread_books', JSON.stringify(state.books));
+    localStorage.setItem('manread_trash', JSON.stringify(state.trash));
 }
 
 // Start the app
