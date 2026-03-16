@@ -3,48 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Genre Roulette</title>
-    <link rel="stylesheet" href="/manread/style.css">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XBGF4ES1DC"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-XBGF4ES1DC');
-    </script>
+    <title>Manread Initialized</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body data-page-key="index">
-    <nav>
-        <a href="/manread/index.html" data-i18n="nav_home">Home</a>
-        <a href="/manread/about.html" data-i18n="nav_about">About</a>
-        <a href="/manread/contact.html" data-i18n="nav_contact">Contact</a>
-        <div class="controls-container">
-            <button id="theme-toggle">☀️</button>
-            <button id="lang-toggle" data-lang="en">🇰🇷</button>
-        </div>
-    </nav>
-
-    <div class="main-content">
-        <h1 data-i18n="index_title">Find Your Next Read</h1>
-        <p data-i18n="index_description">Choose a book genre, and we'll recommend some great books for you to check out!</p>
-        
-        <div id="genre-selection-container">
-            <!-- Genre buttons will be inserted here by JavaScript -->
-        </div>
-
-        <h2 id="result" data-i18n="result_text_prefix"></h2>
-        <div id="recommendations">
-            <h3 data-i18n="recommendations_title">Top 5 Recommendations:</h3>
-            <ul id="book-list"></ul>
-        </div>
+<body>
+    <div id="app">
+        <h1>Welcome to Manread</h1>
+        <p>This project has been initialized.</p>
     </div>
-
-    <footer>
-        <a href="/manread/privacy.html" data-i18n="privacy_link_text">Privacy Policy</a>
-    </footer>
-
-    <script src="/manread/main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
