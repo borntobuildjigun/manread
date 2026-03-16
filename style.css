@@ -6,7 +6,7 @@
     --accent: #5d8aa8;
     --accent-soft: #eef2f5;
     --border: #eaedf0;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 body {
@@ -14,13 +14,14 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     margin: 0;
-    padding-bottom: 80px; /* 내비바 공간 */
+    padding-bottom: 90px; /* 내비바 공간 확보 */
 }
 
 #app {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
+    min-height: calc(100vh - 110px);
 }
 
 .serif { font-family: 'Noto Serif KR', serif; }
@@ -42,7 +43,10 @@ body {
     cursor: pointer;
     background: var(--accent);
     color: white;
+    transition: 0.2s;
 }
+
+.btn:active { transform: scale(0.98); }
 
 .btn-outline {
     background: transparent;
@@ -57,6 +61,7 @@ input, textarea {
     border: 1.5px solid var(--border);
     margin-bottom: 12px;
     box-sizing: border-box;
+    font-size: 16px;
 }
 
 .hidden { display: none !important; }
@@ -65,17 +70,19 @@ input, textarea {
 #bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     width: 100%;
     max-width: 600px;
-    background: white;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     display: flex;
     justify-content: space-around;
-    padding: 12px 0;
+    padding: 15px 0 calc(15px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--border);
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
-    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    z-index: 9999; /* 최상단 보장 */
 }
 
 .nav-item {
@@ -83,12 +90,22 @@ input, textarea {
     border: none;
     color: var(--text-muted);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
 }
 
 .nav-item.active {
     color: var(--accent);
+}
+
+.nav-icon {
+    font-size: 1.4rem;
+    margin-bottom: 2px;
 }
 
 /* Feed */
@@ -117,4 +134,5 @@ input, textarea {
     padding-left: 16px;
     font-style: italic;
     margin: 10px 0;
+    color: #444;
 }
