@@ -93,7 +93,7 @@ document.getElementById('login-btn').addEventListener('click', async () => {
         enterBookstore(nickname);
     } catch (e) {
         console.error("Join error:", e);
-        alert("참여 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        alert("참여 중 오류가 발생했습니다: " + e.message + "\nFirebase 설정(apiKey 등)이 올바른지 확인해주세요.");
     }
 });
 
