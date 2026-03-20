@@ -72,7 +72,10 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <h1 class="serif" id="user-greeting">나의 책방</h1>
-                        <button id="open-settings-btn" class="btn-icon" title="설정" style="font-size: 1.2rem;">⚙️</button>
+                        <div style="position: relative;">
+                            <button id="open-settings-btn" class="btn-icon" title="설정" style="font-size: 1.2rem;">⚙️</button>
+                            <div id="notif-dot" class="hidden" style="position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: #e74c3c; border-radius: 50%; border: 2px solid white;"></div>
+                        </div>
                     </div>
                     <div id="owner-actions" class="hidden" style="display: flex; gap: 8px;">
 ...
@@ -121,12 +124,6 @@
                     </div>
                     <div style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; text-align: right;">
                         <button id="delete-account-btn" class="btn btn-small btn-outline" style="border-color: #e74c3c; color: #e74c3c; font-size: 0.8rem;">아이디 삭제</button>
-
-
-
-
-
-
 
 
                     </div>
