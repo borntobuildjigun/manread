@@ -12,6 +12,7 @@
     <!-- Firebase SDKs (CDN) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body>
     <div id="app">
@@ -23,11 +24,12 @@
         </div>
 
         <!-- 1. 로그인 화면 -->
-        <div id="login-view" class="card">
+        <div id="login-view" class="card" style="text-align: center;">
             <h1 class="serif">반가워요 👋</h1>
-            <p>닉네임을 입력하고 우리들의 책방에 참여하세요.</p>
-            <input type="text" id="nickname-input" placeholder="나만의 닉네임" maxlength="15">
-            <button id="login-btn" class="btn" style="width: 100%;">참여하기</button>
+            <p>우리들의 책방에 로그인하여 나만의 독서 기록을 시작하세요.</p>
+            <button id="google-login-btn" class="btn" style="width: 100%; background: #4285F4; margin-top: 10px;">
+                <span style="margin-right: 8px;">G</span> 구글로 계속하기
+            </button>
         </div>
 
         <!-- 2. 메인 피드 -->
@@ -54,10 +56,22 @@
         <div id="bookstore-view" class="hidden">
             <header style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h1 class="serif" id="user-greeting">나의 책방</h1>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h1 class="serif" id="user-greeting">나의 책방</h1>
+                        <button id="edit-profile-btn" class="btn-icon" title="프로필 수정">✏️</button>
+                    </div>
                     <div id="owner-actions" class="hidden" style="display: flex; gap: 8px;">
                         <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️</button>
                         <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
+                        <button id="logout-btn" class="btn btn-outline" style="border-color: #95a5a6; color: #95a5a6;">로그아웃</button>
+                    </div>
+                </div>
+                <!-- 프로필 수정 영역 (토글형) -->
+                <div id="profile-settings" class="card hidden" style="background: var(--accent-soft); border: none; padding: 15px; margin-top: 10px;">
+                    <h4 style="margin-top:0;">👤 프로필 설정</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="nickname-edit-input" placeholder="새로운 닉네임" maxlength="15" style="margin-bottom:0;">
+                        <button id="save-nickname-btn" class="btn btn-small">저장</button>
                     </div>
                 </div>
             </header>

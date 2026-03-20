@@ -1,7 +1,9 @@
 // State Management
 let state = {
-    myNickname: localStorage.getItem('manread_nickname') || '',
-    currentStoreOwner: null,
+    user: null, // Firebase Auth user object
+    myNickname: '익명',
+    currentStoreOwner: null, // UID of the store being viewed
+    currentStoreOwnerNickname: '익명',
     currentBook: null,
     editingRecordId: null,
     timer: { 
@@ -9,16 +11,16 @@ let state = {
         seconds: 0, 
         isRunning: false, 
         startTime: null,
-        persistedSeconds: 0 // 이전 세션까지의 누적 초
+        persistedSeconds: 0
     },
     feed: {
-        lastDoc: null, // 페이징을 위한 마지막 문서
-        isInitialLoad: true,
+        lastDoc: null,
         unsubscribe: null
     }
 };
 
 let db;
+let auth;
 
 // DOM Elements
 const views = {
@@ -42,22 +44,42 @@ function init() {
             firebase.initializeApp({ projectId: "manread-74612" });
         }
         db = firebase.firestore();
+        auth = firebase.auth();
         
-        // 타이머 상태 복구
-        restoreTimerState();
-        
-        startApp();
+        // Auth Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                state.user = user;
+                await syncUserProfile(user);
+                restoreTimerState();
+                showView('feed');
+                renderFeed();
+            } else {
+                state.user = null;
+                state.myNickname = '익명';
+                showView('login');
+            }
+        });
+
     } catch (e) {
         console.error("Init failed:", e);
     }
 }
 
-function startApp() {
-    if (state.myNickname) {
-        showView('feed');
-        renderFeed();
+async function syncUserProfile(user) {
+    const userRef = db.collection("users").doc(user.uid);
+    const doc = await userRef.get();
+    if (doc.exists) {
+        state.myNickname = doc.data().nickname || '익명 이웃';
     } else {
-        showView('login');
+        // 초기 닉네임 설정 (구글 프로필 이름 사용)
+        const initialName = user.displayName || '익명 이웃';
+        await userRef.set({
+            uid: user.uid,
+            nickname: initialName,
+            joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        state.myNickname = initialName;
     }
 }
 
@@ -66,8 +88,6 @@ function showView(viewName) {
         if (views[v]) views[v].classList.toggle('hidden', v !== viewName);
     });
     if (nav) nav.classList.toggle('hidden', viewName === 'login');
-    
-    // 뷰 이동 시 플로팅 타이머 노출 제어
     updateFloatingTimerVisibility();
 }
 
@@ -77,18 +97,38 @@ function updateNavUI(activeView) {
     });
 }
 
-// 1. Login/Join
-document.getElementById('login-btn').onclick = async () => {
-    const input = document.getElementById('nickname-input');
-    const nickname = input.value.trim();
-    if (!nickname) return;
+// 1. Auth Actions
+document.getElementById('google-login-btn').onclick = () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(e => alert(e.message));
+};
+
+document.getElementById('logout-btn').onclick = () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+        auth.signOut();
+    }
+};
+
+// 닉네임 수정 토글 및 저장
+document.getElementById('edit-profile-btn').onclick = () => {
+    const panel = document.getElementById('profile-settings');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+        document.getElementById('nickname-edit-input').value = state.myNickname;
+    }
+};
+
+document.getElementById('save-nickname-btn').onclick = async () => {
+    const newName = document.getElementById('nickname-edit-input').value.trim();
+    if (!newName) return;
+    
     try {
-        await db.collection("users").doc(nickname).set({ nickname, joinedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-        state.myNickname = nickname;
-        localStorage.setItem('manread_nickname', nickname);
-        showView('feed');
-        updateNavUI('feed');
-        renderFeed();
+        await db.collection("users").doc(state.user.uid).update({ nickname: newName });
+        state.myNickname = newName;
+        document.getElementById('profile-settings').classList.add('hidden');
+        document.getElementById('user-greeting').innerText = "나의 책방";
+        alert('닉네임이 변경되었습니다.');
+        // 피드는 실시간 리스너가 아니므로 필요시 수동 갱신이나 다음 로드 시 반영됨
     } catch (e) { alert(e.message); }
 };
 
@@ -99,56 +139,44 @@ document.querySelectorAll('.nav-item').forEach(item => {
         updateNavUI(view);
         if (view === 'feed') { showView('feed'); renderFeed(); }
         else if (view === 'people') { showView('people'); renderPeopleList(); }
-        else if (view === 'bookstore') { enterBookstore(state.myNickname); }
+        else if (view === 'bookstore') { 
+            if (state.user) enterBookstore(state.user.uid); 
+            else showView('login');
+        }
     };
 });
 
-// 3. Activity Feed (Pagination + 상세 보기)
+// 3. Activity Feed
 async function renderFeed() {
     state.feed.lastDoc = null;
     const feedList = document.getElementById('activity-feed');
     feedList.innerHTML = '<p style="text-align:center;">로딩 중...</p>';
     
-    // 이전 리스너 해제
     if (state.feed.unsubscribe) state.feed.unsubscribe();
 
-    try {
-        // 최신 5개는 실시간 리스너로 유지
-        state.feed.unsubscribe = db.collection("activities")
-            .orderBy("createdAt", "desc")
-            .limit(5)
-            .onSnapshot((snapshot) => {
-                if (snapshot.empty) {
-                    feedList.innerHTML = '<div class="card">활동이 없습니다.</div>';
-                    loadMoreBtn.classList.add('hidden');
-                    return;
-                }
-                
-                // 처음 불러올 때만 전체 리스트를 그리고, 이후엔 추가된 것만 처리하거나 덮어씀
-                // 여기서는 가독성을 위해 간단히 새로고침 로직 유지
-                feedList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const card = createActivityCard(doc.data(), doc.id);
-                    feedList.appendChild(card);
-                });
-
-                // 마지막 문서 저장 (더 보기용)
-                state.feed.lastDoc = snapshot.docs[snapshot.docs.length - 1];
-                loadMoreBtn.classList.remove('hidden');
-                loadMoreBtn.innerText = "활동 더 보기";
-                loadMoreBtn.disabled = false;
+    state.feed.unsubscribe = db.collection("activities")
+        .orderBy("createdAt", "desc")
+        .limit(5)
+        .onSnapshot((snapshot) => {
+            feedList.innerHTML = '';
+            if (snapshot.empty) {
+                feedList.innerHTML = '<div class="card">활동이 없습니다.</div>';
+                loadMoreBtn.classList.add('hidden');
+                return;
+            }
+            snapshot.forEach(doc => {
+                const card = createActivityCard(doc.data(), doc.id);
+                feedList.appendChild(card);
             });
-    } catch (e) { 
-        feedList.innerHTML = '<p>로드 실패</p>'; 
-    }
+            state.feed.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            loadMoreBtn.classList.remove('hidden');
+            loadMoreBtn.disabled = false;
+        });
 }
 
 async function loadMoreActivities() {
     if (!state.feed.lastDoc) return;
-    
     loadMoreBtn.disabled = true;
-    loadMoreBtn.innerText = "불러오는 중...";
-    
     try {
         const snapshot = await db.collection("activities")
             .orderBy("createdAt", "desc")
@@ -158,35 +186,27 @@ async function loadMoreActivities() {
         
         if (snapshot.empty) {
             loadMoreBtn.innerText = "마지막 활동입니다.";
-            loadMoreBtn.disabled = true;
             return;
         }
-
         const feedList = document.getElementById('activity-feed');
         snapshot.forEach(doc => {
             const card = createActivityCard(doc.data(), doc.id);
             feedList.appendChild(card);
         });
-
         state.feed.lastDoc = snapshot.docs[snapshot.docs.length - 1];
-        loadMoreBtn.innerText = "활동 더 보기";
         loadMoreBtn.disabled = false;
-    } catch (e) {
-        alert("데이터를 가져오지 못했습니다.");
-        loadMoreBtn.disabled = false;
-    }
+    } catch (e) { loadMoreBtn.disabled = false; }
 }
 
 function createActivityCard(act, id) {
     const div = document.createElement('div');
     div.className = 'card feed-item';
-    
     const timeStr = act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : '';
     const hasLongContent = act.content && act.content.length > 100;
 
     div.innerHTML = `
         <div style="margin-bottom:8px;">
-            <span class="feed-user" onclick="enterBookstore('${act.user}')">${act.user}</span>님이 
+            <span class="feed-user" onclick="enterBookstore('${act.uid}')">${act.nickname || '익명'}</span>님이 
             <strong>${act.bookTitle}</strong> 책에 
             ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}
         </div>
@@ -209,16 +229,6 @@ window.toggleDetail = (id) => {
 loadMoreBtn.onclick = loadMoreActivities;
 
 // 4. People List
-document.getElementById('register-person-btn').onclick = async () => {
-    const nickname = prompt('등록할 닉네임:');
-    if (!nickname) return;
-    const userRef = db.collection("users").doc(nickname);
-    const snap = await userRef.get();
-    if (snap.exists) { alert("이미 존재합니다."); return; }
-    await userRef.set({ nickname, joinedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    renderPeopleList();
-};
-
 async function renderPeopleList() {
     const list = document.getElementById('people-list');
     list.innerHTML = '';
@@ -229,26 +239,31 @@ async function renderPeopleList() {
         div.className = 'card';
         div.style.textAlign = 'center'; div.style.cursor = 'pointer';
         div.innerHTML = `<div style="font-size: 2rem;">📖</div><div>${user.nickname}</div>`;
-        div.onclick = () => enterBookstore(user.nickname);
+        div.onclick = () => enterBookstore(user.uid);
         list.appendChild(div);
     });
 }
 
 // 5. Bookstore
-async function enterBookstore(nickname) {
-    state.currentStoreOwner = nickname;
-    document.getElementById('user-greeting').innerText = (nickname === state.myNickname) ? "나의 책방" : `${nickname}님의 책방`;
-    const isOwner = (nickname === state.myNickname);
+async function enterBookstore(uid) {
+    state.currentStoreOwner = uid;
+    const ownerDoc = await db.collection("users").doc(uid).get();
+    const ownerData = ownerDoc.data();
+    state.currentStoreOwnerNickname = ownerData ? ownerData.nickname : '익명';
+
+    const isOwner = (state.user && state.user.uid === uid);
+    document.getElementById('user-greeting').innerText = isOwner ? "나의 책방" : `${state.currentStoreOwnerNickname}님의 책방`;
     document.getElementById('owner-actions').classList.toggle('hidden', !isOwner);
+    document.getElementById('edit-profile-btn').classList.toggle('hidden', !isOwner);
+    
     showView('bookstore');
-    if (isOwner) updateNavUI('bookstore'); else updateNavUI('people');
-    renderBooks(nickname);
+    renderBooks(uid);
 }
 
-async function renderBooks(owner) {
+async function renderBooks(ownerUid) {
     const list = document.getElementById('book-list');
     list.innerHTML = '';
-    const snap = await db.collection("users").doc(owner).collection("books").orderBy("createdAt", "desc").get();
+    const snap = await db.collection("users").doc(ownerUid).collection("books").orderBy("createdAt", "desc").get();
     snap.forEach(doc => {
         const book = doc.data();
         const bid = doc.id;
@@ -258,7 +273,7 @@ async function renderBooks(owner) {
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div><h3 class="serif" style="margin:0;">${book.title}</h3><p style="margin:4px 0; color:var(--text-muted);">${book.author}</p></div>
                 <button class="btn btn-outline" onclick="openTracker('${bid}', '${book.title.replace(/'/g, "\\'")}')">
-                    ${owner === state.myNickname ? '읽기' : '구경'}
+                    ${(state.user && state.user.uid === ownerUid) ? '읽기' : '구경'}
                 </button>
             </div>
         `;
@@ -270,13 +285,11 @@ async function renderBooks(owner) {
 window.openTracker = async (bid, title) => {
     state.currentBook = { id: bid, title: title };
     document.getElementById('current-book-title').innerText = title;
-    const isOwner = (state.currentStoreOwner === state.myNickname);
+    const isOwner = (state.user && state.currentStoreOwner === state.user.uid);
     document.getElementById('timer-section').classList.toggle('hidden', !isOwner);
     document.getElementById('record-entry').classList.toggle('hidden', !isOwner);
     
-    // 타이머 상태 UI 업데이트
     updateTimerUI();
-
     resetRecordInputs();
     showView('tracker');
     renderRecords();
@@ -284,6 +297,7 @@ window.openTracker = async (bid, title) => {
 };
 
 document.getElementById('save-record-btn').onclick = async () => {
+    if (!state.user) return alert('로그인이 필요합니다.');
     const content = document.getElementById('record-input').value;
     const page = document.getElementById('page-input').value || 0;
     const paragraph = document.getElementById('paragraph-input').value || 0;
@@ -291,29 +305,21 @@ document.getElementById('save-record-btn').onclick = async () => {
     if (!content) return;
 
     try {
-        const recordsRef = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records");
+        const recordsRef = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("records");
         
         if (state.editingRecordId) {
-            // 1. 기존 기록 업데이트
             await recordsRef.doc(state.editingRecordId).update({ content, page, paragraph, line, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-            
-            // 2. 활동 피드 동기화
             const recordSnap = await recordsRef.doc(state.editingRecordId).get();
             const activityId = recordSnap.data().relatedActivityId;
             if (activityId) {
-                // updateDoc 역할을 하는 update() 사용
-                await db.collection("activities").doc(activityId).update({ content });
+                await db.collection("activities").doc(activityId).update({ content, nickname: state.myNickname });
             }
-            
             state.editingRecordId = null;
         } else {
-            // 1. 활동 피드 먼저 생성 후 ID 받기
             const activityId = await logActivity('record', content);
-            
-            // 2. 기록 생성 시 피드 ID 연결
             await recordsRef.add({ 
                 content, page, paragraph, line, 
-                relatedActivityId: activityId, // 연결 고리 추가
+                relatedActivityId: activityId,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp() 
             });
         }
@@ -325,8 +331,9 @@ document.getElementById('save-record-btn').onclick = async () => {
 async function renderRecords() {
     const list = document.getElementById('records-list');
     list.innerHTML = '<h3>독서 기록</h3>';
-    const isOwner = (state.currentStoreOwner === state.myNickname);
     const snap = await db.collection("users").doc(state.currentStoreOwner).collection("books").doc(state.currentBook.id).collection("records").orderBy("createdAt", "desc").get();
+    const isOwner = (state.user && state.currentStoreOwner === state.user.uid);
+    
     snap.forEach(doc => {
         const rec = doc.data();
         const rid = doc.id;
@@ -350,19 +357,16 @@ async function renderSessions() {
     const list = document.getElementById('sessions-list');
     list.innerHTML = '<h3>독서 세션</h3>';
     const snap = await db.collection("users").doc(state.currentStoreOwner).collection("books").doc(state.currentBook.id).collection("sessions").orderBy("createdAt", "desc").get();
-    
     if (snap.empty) {
         list.innerHTML += '<p style="color:var(--text-muted); font-size:0.9rem;">기록된 세션이 없습니다.</p>';
         return;
     }
-
     snap.forEach(doc => {
         const sess = doc.data();
         if (!sess.startTime || !sess.endTime) return;
         const start = sess.startTime.toDate();
         const end = sess.endTime.toDate();
         const duration = sess.duration;
-        
         const hours = Math.floor(duration / 3600);
         const minutes = Math.floor((duration % 3600) / 60);
         const seconds = duration % 60;
@@ -370,12 +374,9 @@ async function renderSessions() {
         if (hours > 0) durStr += `${hours}시간 `;
         if (minutes > 0) durStr += `${minutes}분 `;
         if (durStr === "" || seconds > 0) durStr += `${seconds}초`;
-
         const div = document.createElement('div');
         div.className = 'card';
-        div.style.padding = '12px';
-        div.style.marginBottom = '8px';
-        div.style.fontSize = '0.85rem';
+        div.style.padding = '12px'; div.style.marginBottom = '8px'; div.style.fontSize = '0.85rem';
         div.innerHTML = `
             <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">${start.toLocaleDateString()}</div>
             <div style="color:var(--text-main);">${start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ~ ${end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
@@ -410,189 +411,37 @@ function resetRecordInputs() {
 
 window.deleteRecord = async (rid) => {
     if (!confirm('삭제하시겠습니까? 휴지통으로 이동합니다.')) return;
-    const ref = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records").doc(rid);
+    const ref = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("records").doc(rid);
     const snap = await ref.get();
-    await db.collection("users").doc(state.myNickname).collection("trash").add({ ...snap.data(), originalBookId: state.currentBook.id, deletedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    await db.collection("users").doc(state.user.uid).collection("trash").add({ ...snap.data(), originalBookId: state.currentBook.id, deletedAt: firebase.firestore.FieldValue.serverTimestamp() });
     await ref.delete();
     renderRecords();
 };
 
-// 7. Trash
-document.getElementById('trash-btn').onclick = () => { showView('trash'); renderTrash(); };
-document.getElementById('back-from-trash-btn').onclick = () => enterBookstore(state.myNickname);
-
-async function renderTrash() {
-    const list = document.getElementById('trash-list');
-    list.innerHTML = '';
-    const snap = await db.collection("users").doc(state.myNickname).collection("trash").orderBy("deletedAt", "desc").get();
-    if (snap.empty) list.innerHTML = '<div class="card">비어 있음</div>';
-    snap.forEach(doc => {
-        const rec = doc.data();
-        const tid = doc.id;
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-            <div class="quote-box serif">${rec.content}</div>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-                <button class="btn btn-small" onclick="restoreRecord('${tid}')">복원</button>
-                <button class="btn btn-danger btn-small" onclick="permanentlyDeleteRecord('${tid}')">영구 삭제</button>
-            </div>
-        `;
-        list.appendChild(div);
-    });
-}
-
-window.restoreRecord = async (tid) => {
-    const ref = db.collection("users").doc(state.myNickname).collection("trash").doc(tid);
-    const snap = await ref.get();
-    const data = snap.data();
-    await db.collection("users").doc(state.myNickname).collection("books").doc(data.originalBookId).collection("records").add({ ...data });
-    await ref.delete();
-    renderTrash();
-    alert('복원되었습니다.');
-};
-
-window.permanentlyDeleteRecord = async (tid) => {
-    if (!confirm('영구 삭제하시겠습니까?')) return;
-    await db.collection("users").doc(state.myNickname).collection("trash").doc(tid).delete();
-    renderTrash();
-};
-
 async function logActivity(type, content) {
-    if (!state.currentBook) return null;
+    if (!state.user || !state.currentBook) return null;
     const docRef = await db.collection("activities").add({ 
-        user: state.myNickname, 
+        uid: state.user.uid,
+        nickname: state.myNickname,
         type, 
         bookTitle: state.currentBook.title, 
         content, 
         createdAt: firebase.firestore.FieldValue.serverTimestamp() 
     });
-    return docRef.id; // 생성된 활동의 ID 반환
+    return docRef.id;
 }
 
 document.getElementById('add-book-btn').onclick = async () => {
     const title = prompt('제목:'); const author = prompt('저자:');
-    if (title && author) {
-        await db.collection("users").doc(state.myNickname).collection("books").add({ title, author, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        logActivity('book', `새 책 추가`); renderBooks(state.myNickname);
+    if (title && author && state.user) {
+        await db.collection("users").doc(state.user.uid).collection("books").add({ title, author, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        logActivity('book', `새 책 추가`); renderBooks(state.user.uid);
     }
 };
 
-document.getElementById('back-to-store-btn').onclick = () => enterBookstore(state.currentStoreOwner);
-window.enterBookstore = enterBookstore;
-
-// 8. Timer Logic
-function updateTimerDisplay() {
-    const hours = Math.floor(state.timer.seconds / 3600);
-    const minutes = Math.floor((state.timer.seconds % 3600) / 60);
-    const seconds = state.timer.seconds % 60;
-    const display = [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
-    
-    // 메인 타이머 업데이트 (현재 뷰가 tracker일 때)
-    const timerElem = document.getElementById('timer');
-    if (timerElem) timerElem.innerText = display;
-    
-    // 플로팅 타이머 업데이트
-    if (floatingTimerDisplay) floatingTimerDisplay.innerText = display;
-}
-
-function updateFloatingTimerVisibility() {
-    if (!floatingTimer) return;
-    // 타이머 기록 중일 때 (초가 0보다 클 때) 노출
-    const isTrackerView = !views.tracker.classList.contains('hidden');
-    floatingTimer.classList.toggle('hidden', state.timer.seconds === 0 || isTrackerView);
-    
-    // 실행 상태에 따른 시각적 표시
-    floatingTimer.classList.toggle('paused', !state.timer.isRunning);
-    if (floatingTimerToggle) {
-        floatingTimerToggle.innerText = state.timer.isRunning ? "⏸️" : "▶️";
-    }
-}
-
-function toggleTimer() {
-    const btn = document.getElementById('timer-btn');
-    if (state.timer.isRunning) {
-        // 일시 정지
-        clearInterval(state.timer.interval);
-        state.timer.isRunning = false;
-        state.timer.persistedSeconds = state.timer.seconds; // 현재까지 누적된 시간 저장
-        state.timer.startTime = null;
-        if (btn) btn.innerText = "다시 시작";
-    } else {
-        // 시작 / 다시 시작
-        state.timer.isRunning = true;
-        if (!state.timer.startTime) {
-            state.timer.startTime = new Date().getTime();
-        }
-        if (btn) btn.innerText = "일시 정지";
-        
-        state.timer.interval = setInterval(() => {
-            const now = new Date().getTime();
-            // (현재 시간 - 시작 시간) / 1000 + 이전에 누적된 시간
-            state.timer.seconds = Math.floor((now - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
-            updateTimerDisplay();
-            saveTimerState(); // 매 초마다 로컬에 저장 (안정성)
-        }, 1000);
-    }
-    saveTimerState();
-    updateFloatingTimerVisibility();
-}
-
-function updateTimerUI() {
-    const btn = document.getElementById('timer-btn');
-    if (!btn) return;
-    
-    if (state.timer.isRunning) {
-        btn.innerText = "일시 정지";
-    } else {
-        btn.innerText = state.timer.seconds > 0 ? "다시 시작" : "읽기 시작";
-    }
-    updateTimerDisplay();
-    updateFloatingTimerVisibility();
-}
-
-async function finishReading() {
-    if (state.timer.seconds > 0) {
-        const hours = Math.floor(state.timer.seconds / 3600);
-        const minutes = Math.floor((state.timer.seconds % 3600) / 60);
-        let timeStr = "";
-        if (hours > 0) timeStr += `${hours}시간 `;
-        if (minutes > 0) timeStr += `${minutes}분 `;
-        if (timeStr === "") timeStr = "1분 미만";
-        
-        if (confirm(`${timeStr} 동안 읽으셨네요! 독서를 종료할까요?`)) {
-            // Save session
-            try {
-                // 시작 시간 복구 (현재 시간에서 경과 시간 뺌)
-                const sTime = new Date(new Date().getTime() - state.timer.seconds * 1000);
-                const sessionsRef = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("sessions");
-                await sessionsRef.add({
-                    startTime: firebase.firestore.Timestamp.fromDate(sTime),
-                    endTime: firebase.firestore.FieldValue.serverTimestamp(),
-                    duration: state.timer.seconds,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (e) { console.error("Session save failed:", e); }
-
-            await logActivity('timer', `${timeStr} 동안 독서함`);
-            
-            // 타이머 초기화
-            if (state.timer.interval) clearInterval(state.timer.interval);
-            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null, persistedSeconds: 0 };
-            
-            clearTimerState();
-            updateTimerUI();
-            updateFloatingTimerVisibility();
-            renderSessions();
-        }
-    } else {
-        alert("아직 독서를 시작하지 않았습니다.");
-    }
-}
-
-// 로컬 스토리지 연동
+// 7. Timer & State Persistence (Rest of the logic remains similar but uses state.user.uid)
 function saveTimerState() {
-    if (!state.currentBook) return;
+    if (!state.user || !state.currentBook) return;
     const timerData = {
         seconds: state.timer.seconds,
         isRunning: state.timer.isRunning,
@@ -600,60 +449,147 @@ function saveTimerState() {
         persistedSeconds: state.timer.persistedSeconds,
         book: state.currentBook,
         owner: state.currentStoreOwner,
-        lastUpdated: new Date().getTime()
+        uid: state.user.uid
     };
-    localStorage.setItem('manread_timer_state', JSON.stringify(timerData));
+    localStorage.setItem(`manread_timer_${state.user.uid}`, JSON.stringify(timerData));
 }
 
 function restoreTimerState() {
-    const saved = localStorage.getItem('manread_timer_state');
+    if (!state.user) return;
+    const saved = localStorage.getItem(`manread_timer_${state.user.uid}`);
     if (!saved) return;
-    
     const data = JSON.parse(saved);
     state.currentBook = data.book;
     state.currentStoreOwner = data.owner;
     state.timer.isRunning = data.isRunning;
     state.timer.startTime = data.startTime;
     state.timer.persistedSeconds = data.persistedSeconds;
-    state.timer.seconds = data.seconds;
-
     if (state.timer.isRunning && state.timer.startTime) {
-        // 브라우저 닫혀있던 시간만큼 보정
         const now = new Date().getTime();
         state.timer.seconds = Math.floor((now - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
-        
-        // 타이머 재시작
         state.timer.interval = setInterval(() => {
             const currentTime = new Date().getTime();
             state.timer.seconds = Math.floor((currentTime - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
             updateTimerDisplay();
             saveTimerState();
         }, 1000);
-        
-        updateTimerDisplay();
+    } else {
+        state.timer.seconds = data.seconds;
     }
+    updateTimerDisplay();
 }
 
 function clearTimerState() {
-    localStorage.removeItem('manread_timer_state');
+    if (state.user) localStorage.removeItem(`manread_timer_${state.user.uid}`);
 }
 
-// 플로팅 타이머 클릭 이벤트
-if (floatingTimerDisplay) {
-    floatingTimerDisplay.onclick = (e) => {
-        e.stopPropagation();
-        if (state.currentBook) {
-            openTracker(state.currentBook.id, state.currentBook.title);
+function updateTimerDisplay() {
+    const hours = Math.floor(state.timer.seconds / 3600);
+    const minutes = Math.floor((state.timer.seconds % 3600) / 60);
+    const seconds = state.timer.seconds % 60;
+    const display = [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+    const timerElem = document.getElementById('timer');
+    if (timerElem) timerElem.innerText = display;
+    if (floatingTimerDisplay) floatingTimerDisplay.innerText = display;
+}
+
+function updateFloatingTimerVisibility() {
+    if (!floatingTimer) return;
+    const isTrackerView = !views.tracker.classList.contains('hidden');
+    floatingTimer.classList.toggle('hidden', state.timer.seconds === 0 || isTrackerView);
+    floatingTimer.classList.toggle('paused', !state.timer.isRunning);
+    if (floatingTimerToggle) floatingTimerToggle.innerText = state.timer.isRunning ? "⏸️" : "▶️";
+}
+
+function toggleTimer() {
+    if (state.timer.isRunning) {
+        clearInterval(state.timer.interval);
+        state.timer.isRunning = false;
+        state.timer.persistedSeconds = state.timer.seconds;
+        state.timer.startTime = null;
+    } else {
+        state.timer.isRunning = true;
+        if (!state.timer.startTime) state.timer.startTime = new Date().getTime();
+        state.timer.interval = setInterval(() => {
+            const now = new Date().getTime();
+            state.timer.seconds = Math.floor((now - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
+            updateTimerDisplay();
+            saveTimerState();
+        }, 1000);
+    }
+    saveTimerState();
+    updateTimerUI();
+}
+
+function updateTimerUI() {
+    const btn = document.getElementById('timer-btn');
+    if (btn) btn.innerText = state.timer.isRunning ? "일시 정지" : (state.timer.seconds > 0 ? "다시 시작" : "읽기 시작");
+    updateTimerDisplay();
+    updateFloatingTimerVisibility();
+}
+
+async function finishReading() {
+    if (state.timer.seconds > 0) {
+        let timeStr = `${Math.floor(state.timer.seconds/60)}분`;
+        if (confirm(`${timeStr} 동안 읽으셨네요! 종료할까요?`)) {
+            const sTime = new Date(new Date().getTime() - state.timer.seconds * 1000);
+            await db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("sessions").add({
+                startTime: firebase.firestore.Timestamp.fromDate(sTime),
+                endTime: firebase.firestore.FieldValue.serverTimestamp(),
+                duration: state.timer.seconds,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await logActivity('timer', `${timeStr} 동안 독서함`);
+            if (state.timer.interval) clearInterval(state.timer.interval);
+            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null, persistedSeconds: 0 };
+            clearTimerState();
+            updateTimerUI();
+            renderSessions();
         }
-    };
+    }
 }
 
-if (floatingTimerToggle) {
-    floatingTimerToggle.onclick = (e) => {
-        e.stopPropagation();
-        toggleTimer();
-    };
+document.getElementById('back-to-store-btn').onclick = () => enterBookstore(state.currentStoreOwner);
+document.getElementById('back-from-trash-btn').onclick = () => enterBookstore(state.user.uid);
+document.getElementById('trash-btn').onclick = () => { showView('trash'); renderTrash(); };
+
+async function renderTrash() {
+    const list = document.getElementById('trash-list');
+    list.innerHTML = '';
+    const snap = await db.collection("users").doc(state.user.uid).collection("trash").orderBy("deletedAt", "desc").get();
+    if (snap.empty) list.innerHTML = '<div class="card">비어 있음</div>';
+    snap.forEach(doc => {
+        const rec = doc.data();
+        const tid = doc.id;
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<div class="quote-box serif">${rec.content}</div>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+                <button class="btn btn-small" onclick="restoreRecord('${tid}')">복원</button>
+                <button class="btn btn-danger btn-small" onclick="permanentlyDeleteRecord('${tid}')">영구 삭제</button>
+            </div>`;
+        list.appendChild(div);
+    });
 }
+
+window.restoreRecord = async (tid) => {
+    const ref = db.collection("users").doc(state.user.uid).collection("trash").doc(tid);
+    const snap = await ref.get();
+    const data = snap.data();
+    await db.collection("users").doc(state.user.uid).collection("books").doc(data.originalBookId).collection("records").add({ ...data });
+    await ref.delete();
+    renderTrash();
+};
+
+window.permanentlyDeleteRecord = async (tid) => {
+    if (confirm('영구 삭제하시겠습니까?')) {
+        await db.collection("users").doc(state.user.uid).collection("trash").doc(tid).delete();
+        renderTrash();
+    }
+};
+
+if (floatingTimerDisplay) floatingTimerDisplay.onclick = (e) => { e.stopPropagation(); if (state.currentBook) openTracker(state.currentBook.id, state.currentBook.title); };
+if (floatingTimerToggle) floatingTimerToggle.onclick = (e) => { e.stopPropagation(); toggleTimer(); };
 
 const timerBtn = document.getElementById('timer-btn');
 const finishBtn = document.getElementById('finish-btn');
