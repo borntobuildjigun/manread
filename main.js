@@ -4,7 +4,13 @@ let state = {
     currentStoreOwner: null,
     currentBook: null,
     editingRecordId: null,
-    timer: { interval: null, seconds: 0, isRunning: false, startTime: null }
+    timer: { 
+        interval: null, 
+        seconds: 0, 
+        isRunning: false, 
+        startTime: null,
+        persistedSeconds: 0 // 이전 세션까지의 누적 초
+    }
 };
 
 let db;
@@ -19,6 +25,8 @@ const views = {
     trash: document.getElementById('trash-view')
 };
 const nav = document.getElementById('bottom-nav');
+const floatingTimer = document.getElementById('floating-timer');
+const floatingTimerDisplay = document.getElementById('floating-timer-display');
 
 // Initialize App
 function init() {
@@ -27,6 +35,10 @@ function init() {
             firebase.initializeApp({ projectId: "manread-74612" });
         }
         db = firebase.firestore();
+        
+        // 타이머 상태 복구
+        restoreTimerState();
+        
         startApp();
     } catch (e) {
         console.error("Init failed:", e);
@@ -47,6 +59,9 @@ function showView(viewName) {
         if (views[v]) views[v].classList.toggle('hidden', v !== viewName);
     });
     if (nav) nav.classList.toggle('hidden', viewName === 'login');
+    
+    // 뷰 이동 시 플로팅 타이머 노출 제어
+    updateFloatingTimerVisibility();
 }
 
 function updateNavUI(activeView) {
@@ -170,12 +185,8 @@ window.openTracker = async (bid, title) => {
     document.getElementById('timer-section').classList.toggle('hidden', !isOwner);
     document.getElementById('record-entry').classList.toggle('hidden', !isOwner);
     
-    // Timer reset
-    if (state.timer.interval) clearInterval(state.timer.interval);
-    state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null };
-    updateTimerDisplay();
-    const timerBtn = document.getElementById('timer-btn');
-    if (timerBtn) timerBtn.innerText = "읽기 시작";
+    // 타이머 상태 UI 업데이트
+    updateTimerUI();
 
     resetRecordInputs();
     showView('tracker');
@@ -362,34 +373,65 @@ function updateTimerDisplay() {
     const minutes = Math.floor((state.timer.seconds % 3600) / 60);
     const seconds = state.timer.seconds % 60;
     const display = [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+    
+    // 메인 타이머 업데이트 (현재 뷰가 tracker일 때)
     const timerElem = document.getElementById('timer');
     if (timerElem) timerElem.innerText = display;
+    
+    // 플로팅 타이머 업데이트
+    if (floatingTimerDisplay) floatingTimerDisplay.innerText = display;
+}
+
+function updateFloatingTimerVisibility() {
+    if (!floatingTimer) return;
+    // 타이머가 작동 중이고, 현재 tracker 뷰가 아닐 때만 노출
+    const isTrackerView = !views.tracker.classList.contains('hidden');
+    floatingTimer.classList.toggle('hidden', !state.timer.isRunning || isTrackerView);
 }
 
 function toggleTimer() {
     const btn = document.getElementById('timer-btn');
     if (state.timer.isRunning) {
+        // 일시 정지
         clearInterval(state.timer.interval);
         state.timer.isRunning = false;
-        btn.innerText = "다시 시작";
+        state.timer.persistedSeconds = state.timer.seconds; // 현재까지 누적된 시간 저장
+        state.timer.startTime = null;
+        if (btn) btn.innerText = "다시 시작";
     } else {
-        if (state.timer.seconds === 0) {
-            state.timer.startTime = new Date();
-        }
+        // 시작 / 다시 시작
         state.timer.isRunning = true;
-        btn.innerText = "일시 정지";
+        if (!state.timer.startTime) {
+            state.timer.startTime = new Date().getTime();
+        }
+        if (btn) btn.innerText = "일시 정지";
+        
         state.timer.interval = setInterval(() => {
-            state.timer.seconds++;
+            const now = new Date().getTime();
+            // (현재 시간 - 시작 시간) / 1000 + 이전에 누적된 시간
+            state.timer.seconds = Math.floor((now - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
             updateTimerDisplay();
+            saveTimerState(); // 매 초마다 로컬에 저장 (안정성)
         }, 1000);
     }
+    saveTimerState();
+    updateFloatingTimerVisibility();
+}
+
+function updateTimerUI() {
+    const btn = document.getElementById('timer-btn');
+    if (!btn) return;
+    
+    if (state.timer.isRunning) {
+        btn.innerText = "일시 정지";
+    } else {
+        btn.innerText = state.timer.seconds > 0 ? "다시 시작" : "읽기 시작";
+    }
+    updateTimerDisplay();
 }
 
 async function finishReading() {
     if (state.timer.seconds > 0) {
-        const endTime = new Date();
-        const startTime = state.timer.startTime;
-
         const hours = Math.floor(state.timer.seconds / 3600);
         const minutes = Math.floor((state.timer.seconds % 3600) / 60);
         let timeStr = "";
@@ -400,25 +442,88 @@ async function finishReading() {
         if (confirm(`${timeStr} 동안 읽으셨네요! 독서를 종료할까요?`)) {
             // Save session
             try {
+                // 시작 시간 복구 (현재 시간에서 경과 시간 뺌)
+                const sTime = new Date(new Date().getTime() - state.timer.seconds * 1000);
                 const sessionsRef = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("sessions");
                 await sessionsRef.add({
-                    startTime,
-                    endTime,
+                    startTime: firebase.firestore.Timestamp.fromDate(sTime),
+                    endTime: firebase.firestore.FieldValue.serverTimestamp(),
                     duration: state.timer.seconds,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (e) { console.error("Session save failed:", e); }
 
             await logActivity('timer', `${timeStr} 동안 독서함`);
+            
+            // 타이머 초기화
             if (state.timer.interval) clearInterval(state.timer.interval);
-            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null };
-            updateTimerDisplay();
-            document.getElementById('timer-btn').innerText = "읽기 시작";
+            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null, persistedSeconds: 0 };
+            
+            clearTimerState();
+            updateTimerUI();
+            updateFloatingTimerVisibility();
             renderSessions();
         }
     } else {
         alert("아직 독서를 시작하지 않았습니다.");
     }
+}
+
+// 로컬 스토리지 연동
+function saveTimerState() {
+    if (!state.currentBook) return;
+    const timerData = {
+        seconds: state.timer.seconds,
+        isRunning: state.timer.isRunning,
+        startTime: state.timer.startTime,
+        persistedSeconds: state.timer.persistedSeconds,
+        book: state.currentBook,
+        owner: state.currentStoreOwner,
+        lastUpdated: new Date().getTime()
+    };
+    localStorage.setItem('manread_timer_state', JSON.stringify(timerData));
+}
+
+function restoreTimerState() {
+    const saved = localStorage.getItem('manread_timer_state');
+    if (!saved) return;
+    
+    const data = JSON.parse(saved);
+    state.currentBook = data.book;
+    state.currentStoreOwner = data.owner;
+    state.timer.isRunning = data.isRunning;
+    state.timer.startTime = data.startTime;
+    state.timer.persistedSeconds = data.persistedSeconds;
+    state.timer.seconds = data.seconds;
+
+    if (state.timer.isRunning && state.timer.startTime) {
+        // 브라우저 닫혀있던 시간만큼 보정
+        const now = new Date().getTime();
+        state.timer.seconds = Math.floor((now - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
+        
+        // 타이머 재시작
+        state.timer.interval = setInterval(() => {
+            const currentTime = new Date().getTime();
+            state.timer.seconds = Math.floor((currentTime - state.timer.startTime) / 1000) + state.timer.persistedSeconds;
+            updateTimerDisplay();
+            saveTimerState();
+        }, 1000);
+        
+        updateTimerDisplay();
+    }
+}
+
+function clearTimerState() {
+    localStorage.removeItem('manread_timer_state');
+}
+
+// 플로팅 타이머 클릭 시 해당 책의 트래커로 이동
+if (floatingTimer) {
+    floatingTimer.onclick = () => {
+        if (state.currentBook) {
+            openTracker(state.currentBook.id, state.currentBook.title);
+        }
+    };
 }
 
 const timerBtn = document.getElementById('timer-btn');
