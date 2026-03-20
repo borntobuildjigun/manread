@@ -493,12 +493,15 @@ async function renderSessions() {
     const list = document.getElementById('sessions-list');
     list.innerHTML = '<h3>독서 세션</h3>';
     const snap = await db.collection("users").doc(state.currentStoreOwner).collection("books").doc(state.currentBook.id).collection("sessions").orderBy("createdAt", "desc").get();
+    const isOwner = (state.user && state.currentStoreOwner === state.user.uid);
+
     if (snap.empty) {
         list.innerHTML += '<p style="color:var(--text-muted); font-size:0.9rem;">기록된 세션이 없습니다.</p>';
         return;
     }
     snap.forEach(doc => {
         const sess = doc.data();
+        const sid = doc.id;
         if (!sess.startTime || !sess.endTime) return;
         const start = sess.startTime.toDate();
         const end = sess.endTime.toDate();
@@ -510,17 +513,47 @@ async function renderSessions() {
         if (hours > 0) durStr += `${hours}시간 `;
         if (minutes > 0) durStr += `${minutes}분 `;
         if (durStr === "" || seconds > 0) durStr += `${seconds}초`;
+        
         const div = document.createElement('div');
         div.className = 'card';
         div.style.padding = '12px'; div.style.marginBottom = '8px'; div.style.fontSize = '0.85rem';
+        div.style.position = 'relative';
+        
         div.innerHTML = `
             <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">${start.toLocaleDateString()}</div>
             <div style="color:var(--text-main);">${start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ~ ${end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
             <div style="color:var(--text-muted); margin-top:4px;">⏱️ ${durStr}</div>
+            ${isOwner ? `<button class="btn-icon" style="position:absolute; top:8px; right:8px; font-size:0.9rem; opacity:0.6;" onclick="deleteSession('${sid}', '${sess.relatedActivityId || ''}')">🗑️</button>` : ''}
         `;
         list.appendChild(div);
     });
 }
+
+window.deleteSession = async (sid, activityId) => {
+    if (!confirm('이 독서 기록을 정말 삭제할까요?\n연동된 활동 피드 기록도 함께 삭제됩니다.')) return;
+
+    try {
+        showLoading(true, "기록을 삭제하고 있습니다...");
+        const batch = db.batch();
+        const sessionRef = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("sessions").doc(sid);
+        
+        // 1. 세션 본문 삭제
+        batch.delete(sessionRef);
+        
+        // 2. 연동된 활동 피드 삭제 (있는 경우)
+        if (activityId) {
+            const activityRef = db.collection("activities").doc(activityId);
+            batch.delete(activityRef);
+        }
+        
+        await batch.commit();
+        renderSessions();
+    } catch (e) {
+        alert("삭제 중 오류가 발생했습니다: " + e.message);
+    } finally {
+        showLoading(false);
+    }
+};
 
 window.startEditRecord = (id, content, page, paragraph, line) => {
     state.editingRecordId = id;
