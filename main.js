@@ -4,7 +4,7 @@ let state = {
     currentStoreOwner: null,
     currentBook: null,
     editingRecordId: null,
-    timer: { interval: null, seconds: 0, isRunning: false }
+    timer: { interval: null, seconds: 0, isRunning: false, startTime: null }
 };
 
 let db;
@@ -169,9 +169,18 @@ window.openTracker = async (bid, title) => {
     const isOwner = (state.currentStoreOwner === state.myNickname);
     document.getElementById('timer-section').classList.toggle('hidden', !isOwner);
     document.getElementById('record-entry').classList.toggle('hidden', !isOwner);
+    
+    // Timer reset
+    if (state.timer.interval) clearInterval(state.timer.interval);
+    state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null };
+    updateTimerDisplay();
+    const timerBtn = document.getElementById('timer-btn');
+    if (timerBtn) timerBtn.innerText = "읽기 시작";
+
     resetRecordInputs();
     showView('tracker');
     renderRecords();
+    renderSessions();
 };
 
 document.getElementById('save-record-btn').onclick = async () => {
@@ -214,6 +223,45 @@ async function renderRecords() {
                 </div>` : ''}
             </div>
             <div style="margin-top:8px; font-size:0.8rem; color:var(--text-muted);">${rec.page}p ${rec.paragraph}문단 ${rec.line}줄</div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+async function renderSessions() {
+    const list = document.getElementById('sessions-list');
+    list.innerHTML = '<h3>독서 세션</h3>';
+    const snap = await db.collection("users").doc(state.currentStoreOwner).collection("books").doc(state.currentBook.id).collection("sessions").orderBy("createdAt", "desc").get();
+    
+    if (snap.empty) {
+        list.innerHTML += '<p style="color:var(--text-muted); font-size:0.9rem;">기록된 세션이 없습니다.</p>';
+        return;
+    }
+
+    snap.forEach(doc => {
+        const sess = doc.data();
+        if (!sess.startTime || !sess.endTime) return;
+        const start = sess.startTime.toDate();
+        const end = sess.endTime.toDate();
+        const duration = sess.duration;
+        
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const seconds = duration % 60;
+        let durStr = "";
+        if (hours > 0) durStr += `${hours}시간 `;
+        if (minutes > 0) durStr += `${minutes}분 `;
+        if (durStr === "" || seconds > 0) durStr += `${seconds}초`;
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.style.padding = '12px';
+        div.style.marginBottom = '8px';
+        div.style.fontSize = '0.85rem';
+        div.innerHTML = `
+            <div style="font-weight:700; color:var(--accent); margin-bottom:4px;">${start.toLocaleDateString()}</div>
+            <div style="color:var(--text-main);">${start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ~ ${end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            <div style="color:var(--text-muted); margin-top:4px;">⏱️ ${durStr}</div>
         `;
         list.appendChild(div);
     });
@@ -307,4 +355,75 @@ document.getElementById('add-book-btn').onclick = async () => {
 
 document.getElementById('back-to-store-btn').onclick = () => enterBookstore(state.currentStoreOwner);
 window.enterBookstore = enterBookstore;
+
+// 8. Timer Logic
+function updateTimerDisplay() {
+    const hours = Math.floor(state.timer.seconds / 3600);
+    const minutes = Math.floor((state.timer.seconds % 3600) / 60);
+    const seconds = state.timer.seconds % 60;
+    const display = [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':');
+    const timerElem = document.getElementById('timer');
+    if (timerElem) timerElem.innerText = display;
+}
+
+function toggleTimer() {
+    const btn = document.getElementById('timer-btn');
+    if (state.timer.isRunning) {
+        clearInterval(state.timer.interval);
+        state.timer.isRunning = false;
+        btn.innerText = "다시 시작";
+    } else {
+        if (state.timer.seconds === 0) {
+            state.timer.startTime = new Date();
+        }
+        state.timer.isRunning = true;
+        btn.innerText = "일시 정지";
+        state.timer.interval = setInterval(() => {
+            state.timer.seconds++;
+            updateTimerDisplay();
+        }, 1000);
+    }
+}
+
+async function finishReading() {
+    if (state.timer.seconds > 0) {
+        const endTime = new Date();
+        const startTime = state.timer.startTime;
+
+        const hours = Math.floor(state.timer.seconds / 3600);
+        const minutes = Math.floor((state.timer.seconds % 3600) / 60);
+        let timeStr = "";
+        if (hours > 0) timeStr += `${hours}시간 `;
+        if (minutes > 0) timeStr += `${minutes}분 `;
+        if (timeStr === "") timeStr = "1분 미만";
+        
+        if (confirm(`${timeStr} 동안 읽으셨네요! 독서를 종료할까요?`)) {
+            // Save session
+            try {
+                const sessionsRef = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("sessions");
+                await sessionsRef.add({
+                    startTime,
+                    endTime,
+                    duration: state.timer.seconds,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (e) { console.error("Session save failed:", e); }
+
+            await logActivity('timer', `${timeStr} 동안 독서함`);
+            if (state.timer.interval) clearInterval(state.timer.interval);
+            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null };
+            updateTimerDisplay();
+            document.getElementById('timer-btn').innerText = "읽기 시작";
+            renderSessions();
+        }
+    } else {
+        alert("아직 독서를 시작하지 않았습니다.");
+    }
+}
+
+const timerBtn = document.getElementById('timer-btn');
+const finishBtn = document.getElementById('finish-btn');
+if (timerBtn) timerBtn.onclick = toggleTimer;
+if (finishBtn) finishBtn.onclick = finishReading;
+
 init();

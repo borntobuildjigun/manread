@@ -22,6 +22,26 @@ body {
     margin: 0 auto;
     padding: 20px;
     min-height: calc(100vh - 110px);
+    transition: max-width 0.3s ease;
+}
+
+#app:has(#tracker-view:not(.hidden)) {
+    max-width: 900px;
+}
+
+.tracker-content-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .tracker-content-grid {
+        grid-template-columns: 1fr;
+    }
+    #app:has(#tracker-view:not(.hidden)) {
+        max-width: 600px;
+    }
 }
 
 .serif { font-family: 'Noto Serif KR', serif; }
