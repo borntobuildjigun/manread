@@ -184,6 +184,33 @@ function logout() {
 
 document.getElementById('logout-btn').onclick = () => { if (confirm('로그아웃 하시겠습니까?')) logout(); };
 
+async function deleteAccount() {
+    if (!state.user) return;
+    if (!confirm('정말 모든 기록을 삭제할까요?\n삭제된 데이터는 복구할 수 없습니다.')) return;
+    showLoading(true, "모든 데이터를 삭제하고 있습니다...");
+    try {
+        const batch = db.batch();
+        const uid = state.user.uid;
+        const activitiesSnap = await db.collection("activities").where("uid", "==", uid).get();
+        activitiesSnap.forEach(doc => batch.delete(doc.ref));
+        const trashSnap = await db.collection("users").doc(uid).collection("trash").get();
+        trashSnap.forEach(doc => batch.delete(doc.ref));
+        const booksSnap = await db.collection("users").doc(uid).collection("books").get();
+        for (const bookDoc of booksSnap.docs) {
+            const recordsSnap = await bookDoc.ref.collection("records").get();
+            recordsSnap.forEach(doc => batch.delete(doc.ref));
+            const sessionsSnap = await bookDoc.ref.collection("sessions").get();
+            sessionsSnap.forEach(doc => batch.delete(doc.ref));
+            batch.delete(bookDoc.ref);
+        }
+        batch.delete(db.collection("users").doc(uid));
+        await batch.commit();
+        alert('모든 데이터가 삭제되었습니다.');
+        logout();
+    } catch (e) { alert("삭제 중 오류 발생: " + e.message); } finally { showLoading(false); }
+}
+document.getElementById('delete-account-btn').onclick = deleteAccount;
+
 // Activity Feed Rendering
 async function renderFeed() {
     state.feed.lastDoc = null;
@@ -210,7 +237,6 @@ function createActivityCard(act, id) {
     const isMe = state.user && act.uid === state.user.uid;
     const authorName = isMe ? `${act.nickname || state.myNickname} (나)` : (act.nickname || '익명');
     const userColor = act.color || '#f8f9fa';
-    
     div.style.borderLeft = `6px solid ${userColor}`;
 
     const reactions = act.reactions || {};
@@ -230,7 +256,7 @@ function createActivityCard(act, id) {
             ${emojis.map(e => {
                 const isActive = act.userReactions && act.userReactions[state.user?.uid]?.includes(e);
                 return `
-                <button class="btn-emoji" onclick="handleReaction('${id}', '${e}')" title="${emojiTooltips[e]}"
+                <button class="btn-emoji" onclick="handleReaction('${id}', '${e}', ${isActive})" title="${emojiTooltips[e]}"
                         style="background: ${isActive ? 'var(--accent-soft)' : 'white'}; border: 1px solid ${isActive ? 'var(--accent)' : '#eee'}; padding: 4px 8px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                     <span>${e}</span> <span style="font-weight: 600;">${reactions[e] || 0}</span>
                 </button>`;
@@ -251,17 +277,28 @@ function createActivityCard(act, id) {
     return div;
 }
 
-window.handleReaction = async (postId, emoji) => {
+// Reaction Logic (Toggle support)
+window.handleReaction = async (postId, emoji, alreadyActive) => {
     if (!state.user) return alert('아이디를 먼저 설정해주세요.');
     const postRef = db.collection("activities").doc(postId);
     try {
-        await postRef.update({
-            [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(1),
-            [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayUnion(emoji)
-        });
+        if (alreadyActive) {
+            // 취소: -1, 목록에서 제거
+            await postRef.update({
+                [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(-1),
+                [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayRemove(emoji)
+            });
+        } else {
+            // 추가: +1, 목록에 추가
+            await postRef.update({
+                [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(1),
+                [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayUnion(emoji)
+            });
+        }
     } catch (e) { console.error(e); }
 };
 
+// Comment Logic
 window.toggleComments = async (postId) => {
     const area = document.getElementById(`comments-area-${postId}`);
     area.classList.toggle('hidden');
@@ -276,20 +313,66 @@ async function renderComments(postId) {
     if (snap.empty) { list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">첫 댓글을 남겨보세요!</p>'; return; }
     snap.forEach(doc => {
         const c = doc.data();
+        const cid = doc.id;
         const div = document.createElement('div');
+        div.id = `comment-node-${cid}`;
         div.style.padding = '8px 12px'; div.style.marginBottom = '8px'; div.style.fontSize = '0.85rem';
         div.style.background = '#fcfcfc'; div.style.borderRadius = '0 8px 8px 0';
         div.style.borderLeft = `4px solid ${c.color || '#eee'}`;
+        
+        const isMyComment = state.user && c.uid === state.user.uid;
+
         div.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                 <span style="font-weight:700;">${c.nickname}</span>
-                <span style="font-size:0.7rem; color:var(--text-muted);">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString() : ''}</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:0.7rem; color:var(--text-muted);">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString() : ''}</span>
+                    ${isMyComment ? `
+                        <button class="btn-text" onclick="startEditComment('${postId}', '${cid}', \`${c.text}\`)" style="font-size:0.7rem; color:var(--accent);">수정</button>
+                        <button class="btn-text" onclick="deleteComment('${postId}', '${cid}')" style="font-size:0.7rem; color:#e74c3c;">삭제</button>
+                    ` : ''}
+                </div>
             </div>
-            <div>${c.text}</div>
+            <div class="comment-text-body">${c.text}</div>
         `;
         list.appendChild(div);
     });
 }
+
+window.startEditComment = (postId, cid, oldText) => {
+    const node = document.getElementById(`comment-node-${cid}`);
+    const textBody = node.querySelector('.comment-text-body');
+    const originalContent = textBody.innerHTML;
+    
+    textBody.innerHTML = `
+        <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+            <textarea id="edit-input-${cid}" style="font-size:0.85rem; padding:8px; width:100%; border:1px solid var(--accent); border-radius:4px;">${oldText}</textarea>
+            <div style="display:flex; gap:4px; justify-content:flex-end;">
+                <button class="btn btn-small" onclick="saveEditComment('${postId}', '${cid}')">저장</button>
+                <button class="btn btn-small btn-outline" onclick="renderComments('${postId}')">취소</button>
+            </div>
+        </div>
+    `;
+};
+
+window.saveEditComment = async (postId, cid) => {
+    const newText = document.getElementById(`edit-input-${cid}`).value.trim();
+    if (!newText) return;
+    try {
+        await db.collection("activities").doc(postId).collection("comments").doc(cid).update({ text: newText, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        renderComments(postId);
+    } catch (e) { alert(e.message); }
+};
+
+window.deleteComment = async (postId, cid) => {
+    if (!confirm('댓글을 삭제할까요?')) return;
+    try {
+        const postRef = db.collection("activities").doc(postId);
+        await postRef.collection("comments").doc(cid).delete();
+        await postRef.update({ commentCount: firebase.firestore.FieldValue.increment(-1) });
+        renderComments(postId);
+    } catch (e) { alert(e.message); }
+};
 
 window.submitComment = async (postId) => {
     if (!state.user) return alert('아이디를 먼저 설정해주세요.');
@@ -307,7 +390,7 @@ window.submitComment = async (postId) => {
     } catch (e) { alert(e.message); }
 };
 
-// ... (이하 동일한 Bookstore, Tracker, Timer 로직 - 기존 로직 유지하되 nickname/color 연동 보강)
+// ... (이하 Bookstore, People, Tracker, Timer 로직 유지)
 
 async function renderPeopleList() {
     const list = document.getElementById('people-list'); list.innerHTML = '';
