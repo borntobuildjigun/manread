@@ -148,6 +148,52 @@ document.getElementById('logout-btn').onclick = () => {
     }
 };
 
+async function deleteAccount() {
+    if (!state.user) return;
+    if (!confirm('정말 모든 기록을 삭제할까요?\n삭제된 데이터는 복구할 수 없습니다.')) return;
+
+    showLoading(true, "모든 데이터를 삭제하고 있습니다...");
+    try {
+        const batch = db.batch();
+        const uid = state.user.uid;
+
+        // 1. 활동 내역 삭제
+        const activitiesSnap = await db.collection("activities").where("uid", "==", uid).get();
+        activitiesSnap.forEach(doc => batch.delete(doc.ref));
+
+        // 2. 휴지통 삭제
+        const trashSnap = await db.collection("users").doc(uid).collection("trash").get();
+        trashSnap.forEach(doc => batch.delete(doc.ref));
+
+        // 3. 책 및 하위 기록/세션 삭제
+        const booksSnap = await db.collection("users").doc(uid).collection("books").get();
+        for (const bookDoc of booksSnap.docs) {
+            const recordsSnap = await bookDoc.ref.collection("records").get();
+            recordsSnap.forEach(doc => batch.delete(doc.ref));
+            
+            const sessionsSnap = await bookDoc.ref.collection("sessions").get();
+            sessionsSnap.forEach(doc => batch.delete(doc.ref));
+            
+            batch.delete(bookDoc.ref);
+        }
+
+        // 4. 사용자 문서 삭제
+        batch.delete(db.collection("users").doc(uid));
+
+        await batch.commit();
+        
+        alert('그동안 이용해주셔서 감사합니다. 모든 데이터가 삭제되었습니다.');
+        logout();
+    } catch (e) {
+        console.error("Delete account failed:", e);
+        alert("삭제 중 오류가 발생했습니다: " + e.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+document.getElementById('delete-account-btn').onclick = deleteAccount;
+
 // 닉네임 수정 토글 및 저장
 document.getElementById('edit-profile-btn').onclick = () => {
     const panel = document.getElementById('profile-settings');
@@ -266,9 +312,14 @@ function createActivityCard(act, id) {
     const timeStr = act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : '';
     const hasLongContent = act.content && act.content.length > 100;
 
+    // 본인 확인 로직: UID가 일치하면 (나) 표시 및 스타일 강조
+    const isMe = state.user && act.uid === state.user.uid;
+    const authorName = isMe ? `${act.nickname || state.myNickname} (나)` : (act.nickname || '익명');
+    const nameStyle = isMe ? 'color: var(--accent); font-weight: 700;' : '';
+
     div.innerHTML = `
         <div style="margin-bottom:8px;">
-            <span class="feed-user" onclick="enterBookstore('${act.uid}')">${act.nickname || '익명'}</span>님이 
+            <span class="feed-user" style="${nameStyle}" onclick="enterBookstore('${act.uid}')">${authorName}</span>님이 
             <strong>${act.bookTitle}</strong> 책에 
             ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}
         </div>
@@ -300,8 +351,15 @@ async function renderPeopleList() {
         const div = document.createElement('div');
         div.className = 'card';
         div.style.textAlign = 'center'; div.style.cursor = 'pointer';
-        div.innerHTML = `<div style="font-size: 2rem;">📖</div><div>${user.nickname}</div>`;
-        div.onclick = () => enterBookstore(user.uid);
+        
+        // 본인 확인 로직
+        const isMe = state.user && doc.id === state.user.uid;
+        const displayName = isMe ? `${user.nickname} (나)` : (user.nickname || '익명');
+        const cardStyle = isMe ? 'border: 2px solid var(--accent-soft);' : '';
+        
+        div.setAttribute('style', `text-align: center; cursor: pointer; ${cardStyle}`);
+        div.innerHTML = `<div style="font-size: 2rem;">📖</div><div>${displayName}</div>`;
+        div.onclick = () => enterBookstore(doc.id);
         list.appendChild(div);
     });
 }
