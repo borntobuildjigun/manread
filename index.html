@@ -48,6 +48,7 @@
         <!-- 2. 메인 피드 -->
         <div id="feed-view" class="hidden">
             <h1 class="serif">활동의 중심</h1>
+            <div id="announcement-area"></div>
             <p style="color:var(--text-muted); margin-bottom:20px;">마을 사람들의 최신 독서 활동입니다.</p>
             <div id="activity-feed"></div>
             <div id="feed-more-container" style="text-align: center; margin-top: 20px;">
@@ -137,6 +138,56 @@
             <div id="trash-list"></div>
         </div>
 
+        <!-- 7. 관리자 대시보드 -->
+        <div id="admin-view" class="hidden">
+            <h1 class="serif">🔧 관리자 대시보드</h1>
+            
+            <div class="card" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: var(--accent); color: white; border: none; text-align: center;">
+                <div>
+                    <div style="font-size: 0.75rem; opacity: 0.8;">오늘 가입</div>
+                    <div id="stat-new-users" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; opacity: 0.8;">오늘 게시물</div>
+                    <div id="stat-new-posts" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.75rem; opacity: 0.8;">현재 독서 중</div>
+                    <div id="stat-active-readers" style="font-size: 1.2rem; font-weight: 700;">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📢 공지사항 등록</h3>
+                <textarea id="admin-announcement-input" placeholder="마을 상단에 고정될 공지 내용을 입력하세요..." rows="3"></textarea>
+                <button id="save-announcement-btn" class="btn" style="width: 100%; margin-top: 8px;">공지 올리기</button>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button class="btn btn-small admin-tab-btn" data-tab="content">콘텐츠</button>
+                <button class="btn btn-small btn-outline admin-tab-btn" data-tab="users">주민</button>
+            </div>
+
+            <div id="admin-tab-content">
+                <div id="admin-activity-list"></div>
+            </div>
+
+            <div id="admin-tab-users" class="hidden">
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="background: var(--accent-soft); text-align: left;">
+                                <th style="padding: 10px;">아이디</th>
+                                <th style="padding: 10px;">가입일</th>
+                                <th style="padding: 10px;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-user-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- 하단 내비게이션 -->
         <nav id="bottom-nav" class="hidden">
             <button class="nav-item" data-view="feed">
@@ -150,6 +201,10 @@
             <button class="nav-item" data-view="bookstore">
                 <span class="nav-icon">📚</span>
                 <span>내 책방</span>
+            </button>
+            <button class="nav-item hidden" data-view="admin" id="nav-admin">
+                <span class="nav-icon">🔧</span>
+                <span>관리</span>
             </button>
         </nav>
     </div>

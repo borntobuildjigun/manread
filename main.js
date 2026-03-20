@@ -16,7 +16,8 @@ let state = {
     feed: {
         lastDoc: null,
         unsubscribe: null
-    }
+    },
+    isAdmin: false
 };
 
 let db;
@@ -28,7 +29,8 @@ const views = {
     people: document.getElementById('people-view'),
     bookstore: document.getElementById('bookstore-view'),
     tracker: document.getElementById('tracker-view'),
-    trash: document.getElementById('trash-view')
+    trash: document.getElementById('trash-view'),
+    admin: document.getElementById('admin-view')
 };
 const nav = document.getElementById('bottom-nav');
 const loadingOverlay = document.getElementById('loading-overlay');
@@ -36,6 +38,7 @@ const floatingTimer = document.getElementById('floating-timer');
 const floatingTimerDisplay = document.getElementById('floating-timer-display');
 const floatingTimerToggle = document.getElementById('floating-timer-toggle');
 const loadMoreBtn = document.getElementById('load-more-btn');
+const navAdmin = document.getElementById('nav-admin');
 
 // Initialize App
 async function init() {
@@ -53,6 +56,9 @@ async function init() {
             showView('login');
             showLoading(false);
         }
+
+        // 초기 공지사항 로드
+        renderAnnouncements();
 
     } catch (e) {
         console.error("Init failed:", e);
@@ -95,6 +101,11 @@ async function handleLogin(nickname) {
         }
         
         localStorage.setItem('manread_user_nickname', state.myNickname);
+        
+        // 관리자 확인
+        state.isAdmin = (nickname === 'admin');
+        if (navAdmin) navAdmin.classList.toggle('hidden', !state.isAdmin);
+        
         restoreTimerState();
         
         // 로그인 성공 후 즉시 피드 화면으로 리다이렉션
@@ -138,6 +149,8 @@ document.getElementById('login-btn').onclick = () => {
 function logout() {
     state.user = null;
     state.myNickname = '익명';
+    state.isAdmin = false;
+    if (navAdmin) navAdmin.classList.add('hidden');
     localStorage.removeItem('manread_user_nickname');
     showView('login');
 }
@@ -251,6 +264,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
             if (state.user) enterBookstore(state.user.uid); 
             else showView('login');
         }
+        else if (view === 'admin') {
+            if (state.isAdmin) { showView('admin'); renderAdminDashboard(); }
+            else { alert('접근 권한이 없습니다.'); showView('feed'); }
+        }
     };
 });
 
@@ -350,7 +367,6 @@ async function renderPeopleList() {
         const user = doc.data();
         const div = document.createElement('div');
         div.className = 'card';
-        div.style.textAlign = 'center'; div.style.cursor = 'pointer';
         
         // 본인 확인 로직
         const isMe = state.user && doc.id === state.user.uid;
@@ -707,6 +723,138 @@ window.permanentlyDeleteRecord = async (tid) => {
         renderTrash();
     }
 };
+
+// 8. Admin Functions
+async function renderAdminDashboard() {
+    if (!state.isAdmin) return;
+    
+    // Stats
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayTs = firebase.firestore.Timestamp.fromDate(today);
+
+    const usersSnap = await db.collection("users").get();
+    const newUsers = usersSnap.docs.filter(d => d.data().joinedAt && d.data().joinedAt.toDate() >= today).length;
+    document.getElementById('stat-new-users').innerText = newUsers;
+
+    const actsSnap = await db.collection("activities").where("createdAt", ">=", todayTs).get();
+    document.getElementById('stat-new-posts').innerText = actsSnap.size;
+
+    // Active Readers (Estimated)
+    document.getElementById('stat-active-readers').innerText = "1+"; 
+
+    // Activity List (Content Control)
+    renderAdminActivities();
+    
+    // User List (User Control)
+    renderAdminUsers();
+}
+
+async function renderAdminActivities() {
+    const list = document.getElementById('admin-activity-list');
+    list.innerHTML = '<p>로딩 중...</p>';
+    const snap = await db.collection("activities").orderBy("createdAt", "desc").limit(50).get();
+    list.innerHTML = '<h3>최신 게시물 관리</h3>';
+    snap.forEach(doc => {
+        const act = doc.data();
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.style.fontSize = '0.8rem';
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <div><strong>${act.nickname}</strong>: ${act.content || act.type}</div>
+                <button class="btn btn-danger btn-small" onclick="deleteActivityAdmin('${doc.id}')">삭제</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+window.deleteActivityAdmin = async (id) => {
+    if (confirm('관리자 권한으로 게시물을 삭제하시겠습니까?')) {
+        await db.collection("activities").doc(id).delete();
+        renderAdminActivities();
+    }
+};
+
+async function renderAdminUsers() {
+    const list = document.getElementById('admin-user-list');
+    list.innerHTML = '';
+    const snap = await db.collection("users").orderBy("joinedAt", "desc").get();
+    snap.forEach(doc => {
+        const user = doc.data();
+        const tr = document.createElement('tr');
+        const dateStr = user.joinedAt ? user.joinedAt.toDate().toLocaleDateString() : '-';
+        tr.innerHTML = `
+            <td style="padding:10px;">${user.nickname}</td>
+            <td style="padding:10px;">${dateStr}</td>
+            <td style="padding:10px; display:flex; gap:4px;">
+                <button class="btn btn-small" onclick="editUserAdmin('${doc.id}', '${user.nickname}')">수정</button>
+                <button class="btn btn-danger btn-small" onclick="blockUserAdmin('${doc.id}')">차단</button>
+            </td>
+        `;
+        list.appendChild(tr);
+    });
+}
+
+window.editUserAdmin = async (uid, oldName) => {
+    const newName = prompt('새 닉네임 입력:', oldName);
+    if (newName && newName !== oldName) {
+        await db.collection("users").doc(uid).update({ nickname: newName });
+        renderAdminUsers();
+    }
+};
+
+window.blockUserAdmin = async (uid) => {
+    if (confirm('해당 사용자를 차단하고 모든 데이터를 삭제하시겠습니까?')) {
+        await db.collection("users").doc(uid).delete();
+        renderAdminUsers();
+    }
+};
+
+// Announcement
+document.getElementById('save-announcement-btn').onclick = async () => {
+    const content = document.getElementById('admin-announcement-input').value.trim();
+    if (!content) return;
+    
+    await db.collection("announcements").add({
+        content,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('admin-announcement-input').value = '';
+    alert('공지사항이 등록되었습니다.');
+    renderAnnouncements();
+};
+
+async function renderAnnouncements() {
+    const area = document.getElementById('announcement-area');
+    if (!area) return;
+    
+    const snap = await db.collection("announcements").orderBy("createdAt", "desc").limit(1).get();
+    if (snap.empty) {
+        area.innerHTML = '';
+        return;
+    }
+    const data = snap.docs[0].data();
+    area.innerHTML = `
+        <div class="card" style="background: #fff9db; border: 1px solid #fcc419; padding: 12px; margin-bottom: 15px; position: relative;">
+            <div style="font-weight: 700; color: #e67700; margin-bottom: 5px;">📢 마을 공지</div>
+            <div style="font-size: 0.9rem;">${data.content}</div>
+        </div>
+    `;
+}
+
+// Admin Tab Switching
+document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+    btn.onclick = () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.admin-tab-btn').forEach(b => {
+            b.classList.toggle('btn-outline', b !== btn);
+        });
+        document.getElementById('admin-tab-content').classList.toggle('hidden', tab !== 'content');
+        document.getElementById('admin-tab-users').classList.toggle('hidden', tab !== 'users');
+    };
+});
 
 if (floatingTimerDisplay) floatingTimerDisplay.onclick = (e) => { e.stopPropagation(); if (state.currentBook) openTracker(state.currentBook.id, state.currentBook.title); };
 if (floatingTimerToggle) floatingTimerToggle.onclick = (e) => { e.stopPropagation(); toggleTimer(); };
