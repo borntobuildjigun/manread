@@ -27,6 +27,7 @@ const views = {
 const nav = document.getElementById('bottom-nav');
 const floatingTimer = document.getElementById('floating-timer');
 const floatingTimerDisplay = document.getElementById('floating-timer-display');
+const floatingTimerToggle = document.getElementById('floating-timer-toggle');
 
 // Initialize App
 function init() {
@@ -384,9 +385,15 @@ function updateTimerDisplay() {
 
 function updateFloatingTimerVisibility() {
     if (!floatingTimer) return;
-    // 타이머가 작동 중이고, 현재 tracker 뷰가 아닐 때만 노출
+    // 타이머 기록 중일 때 (초가 0보다 클 때) 노출
     const isTrackerView = !views.tracker.classList.contains('hidden');
-    floatingTimer.classList.toggle('hidden', !state.timer.isRunning || isTrackerView);
+    floatingTimer.classList.toggle('hidden', state.timer.seconds === 0 || isTrackerView);
+    
+    // 실행 상태에 따른 시각적 표시
+    floatingTimer.classList.toggle('paused', !state.timer.isRunning);
+    if (floatingTimerToggle) {
+        floatingTimerToggle.innerText = state.timer.isRunning ? "⏸️" : "▶️";
+    }
 }
 
 function toggleTimer() {
@@ -428,6 +435,7 @@ function updateTimerUI() {
         btn.innerText = state.timer.seconds > 0 ? "다시 시작" : "읽기 시작";
     }
     updateTimerDisplay();
+    updateFloatingTimerVisibility();
 }
 
 async function finishReading() {
@@ -517,12 +525,20 @@ function clearTimerState() {
     localStorage.removeItem('manread_timer_state');
 }
 
-// 플로팅 타이머 클릭 시 해당 책의 트래커로 이동
-if (floatingTimer) {
-    floatingTimer.onclick = () => {
+// 플로팅 타이머 클릭 이벤트
+if (floatingTimerDisplay) {
+    floatingTimerDisplay.onclick = (e) => {
+        e.stopPropagation();
         if (state.currentBook) {
             openTracker(state.currentBook.id, state.currentBook.title);
         }
+    };
+}
+
+if (floatingTimerToggle) {
+    floatingTimerToggle.onclick = (e) => {
+        e.stopPropagation();
+        toggleTimer();
     };
 }
 
