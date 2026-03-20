@@ -10,6 +10,11 @@ let state = {
         isRunning: false, 
         startTime: null,
         persistedSeconds: 0 // 이전 세션까지의 누적 초
+    },
+    feed: {
+        lastDoc: null, // 페이징을 위한 마지막 문서
+        isInitialLoad: true,
+        unsubscribe: null
     }
 };
 
@@ -28,6 +33,7 @@ const nav = document.getElementById('bottom-nav');
 const floatingTimer = document.getElementById('floating-timer');
 const floatingTimerDisplay = document.getElementById('floating-timer-display');
 const floatingTimerToggle = document.getElementById('floating-timer-toggle');
+const loadMoreBtn = document.getElementById('load-more-btn');
 
 // Initialize App
 function init() {
@@ -97,28 +103,110 @@ document.querySelectorAll('.nav-item').forEach(item => {
     };
 });
 
-// 3. Activity Feed
+// 3. Activity Feed (Pagination + 상세 보기)
 async function renderFeed() {
+    state.feed.lastDoc = null;
     const feedList = document.getElementById('activity-feed');
     feedList.innerHTML = '<p style="text-align:center;">로딩 중...</p>';
+    
+    // 이전 리스너 해제
+    if (state.feed.unsubscribe) state.feed.unsubscribe();
+
     try {
-        const querySnapshot = await db.collection("activities").orderBy("createdAt", "desc").limit(20).get();
-        feedList.innerHTML = '';
-        if (querySnapshot.empty) feedList.innerHTML = '<div class="card">활동이 없습니다.</div>';
-        querySnapshot.forEach(doc => {
-            const act = doc.data();
-            const div = document.createElement('div');
-            div.className = 'card feed-item';
-            div.innerHTML = `
-                <div><span class="feed-user" onclick="enterBookstore('${act.user}')">${act.user}</span>님이 <strong>${act.bookTitle}</strong> 책에 
-                ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}</div>
-                ${act.content ? `<div class="quote-box serif">${act.content}</div>` : ''}
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">${act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : ''}</div>
-            `;
-            feedList.appendChild(div);
-        });
-    } catch (e) { feedList.innerHTML = '<p>로드 실패</p>'; }
+        // 최신 5개는 실시간 리스너로 유지
+        state.feed.unsubscribe = db.collection("activities")
+            .orderBy("createdAt", "desc")
+            .limit(5)
+            .onSnapshot((snapshot) => {
+                if (snapshot.empty) {
+                    feedList.innerHTML = '<div class="card">활동이 없습니다.</div>';
+                    loadMoreBtn.classList.add('hidden');
+                    return;
+                }
+                
+                // 처음 불러올 때만 전체 리스트를 그리고, 이후엔 추가된 것만 처리하거나 덮어씀
+                // 여기서는 가독성을 위해 간단히 새로고침 로직 유지
+                feedList.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const card = createActivityCard(doc.data(), doc.id);
+                    feedList.appendChild(card);
+                });
+
+                // 마지막 문서 저장 (더 보기용)
+                state.feed.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                loadMoreBtn.classList.remove('hidden');
+                loadMoreBtn.innerText = "활동 더 보기";
+                loadMoreBtn.disabled = false;
+            });
+    } catch (e) { 
+        feedList.innerHTML = '<p>로드 실패</p>'; 
+    }
 }
+
+async function loadMoreActivities() {
+    if (!state.feed.lastDoc) return;
+    
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.innerText = "불러오는 중...";
+    
+    try {
+        const snapshot = await db.collection("activities")
+            .orderBy("createdAt", "desc")
+            .startAfter(state.feed.lastDoc)
+            .limit(5)
+            .get();
+        
+        if (snapshot.empty) {
+            loadMoreBtn.innerText = "마지막 활동입니다.";
+            loadMoreBtn.disabled = true;
+            return;
+        }
+
+        const feedList = document.getElementById('activity-feed');
+        snapshot.forEach(doc => {
+            const card = createActivityCard(doc.data(), doc.id);
+            feedList.appendChild(card);
+        });
+
+        state.feed.lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        loadMoreBtn.innerText = "활동 더 보기";
+        loadMoreBtn.disabled = false;
+    } catch (e) {
+        alert("데이터를 가져오지 못했습니다.");
+        loadMoreBtn.disabled = false;
+    }
+}
+
+function createActivityCard(act, id) {
+    const div = document.createElement('div');
+    div.className = 'card feed-item';
+    
+    const timeStr = act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : '';
+    const hasLongContent = act.content && act.content.length > 100;
+
+    div.innerHTML = `
+        <div style="margin-bottom:8px;">
+            <span class="feed-user" onclick="enterBookstore('${act.user}')">${act.user}</span>님이 
+            <strong>${act.bookTitle}</strong> 책에 
+            ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}
+        </div>
+        ${act.content ? `
+            <div id="content-${id}" class="quote-box serif feed-content">${act.content}</div>
+            ${hasLongContent ? `<button class="btn-detail" onclick="toggleDetail('${id}')">상세보기</button>` : ''}
+        ` : ''}
+        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">${timeStr}</div>
+    `;
+    return div;
+}
+
+window.toggleDetail = (id) => {
+    const content = document.getElementById(`content-${id}`);
+    const btn = content.nextElementSibling;
+    const isExpanded = content.classList.toggle('expanded');
+    btn.innerText = isExpanded ? '접기' : '상세보기';
+};
+
+loadMoreBtn.onclick = loadMoreActivities;
 
 // 4. People List
 document.getElementById('register-person-btn').onclick = async () => {
@@ -204,12 +292,30 @@ document.getElementById('save-record-btn').onclick = async () => {
 
     try {
         const recordsRef = db.collection("users").doc(state.myNickname).collection("books").doc(state.currentBook.id).collection("records");
+        
         if (state.editingRecordId) {
+            // 1. 기존 기록 업데이트
             await recordsRef.doc(state.editingRecordId).update({ content, page, paragraph, line, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            
+            // 2. 활동 피드 동기화
+            const recordSnap = await recordsRef.doc(state.editingRecordId).get();
+            const activityId = recordSnap.data().relatedActivityId;
+            if (activityId) {
+                // updateDoc 역할을 하는 update() 사용
+                await db.collection("activities").doc(activityId).update({ content });
+            }
+            
             state.editingRecordId = null;
         } else {
-            await recordsRef.add({ content, page, paragraph, line, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            await logActivity('record', content);
+            // 1. 활동 피드 먼저 생성 후 ID 받기
+            const activityId = await logActivity('record', content);
+            
+            // 2. 기록 생성 시 피드 ID 연결
+            await recordsRef.add({ 
+                content, page, paragraph, line, 
+                relatedActivityId: activityId, // 연결 고리 추가
+                createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+            });
         }
         resetRecordInputs();
         renderRecords();
@@ -353,8 +459,15 @@ window.permanentlyDeleteRecord = async (tid) => {
 };
 
 async function logActivity(type, content) {
-    if (!state.currentBook) return;
-    await db.collection("activities").add({ user: state.myNickname, type, bookTitle: state.currentBook.title, content, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if (!state.currentBook) return null;
+    const docRef = await db.collection("activities").add({ 
+        user: state.myNickname, 
+        type, 
+        bookTitle: state.currentBook.title, 
+        content, 
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+    });
+    return docRef.id; // 생성된 활동의 ID 반환
 }
 
 document.getElementById('add-book-btn').onclick = async () => {

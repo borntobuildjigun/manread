@@ -157,6 +157,38 @@ input, textarea {
     color: #444;
 }
 
+/* 활동 피드 가독성 개선 */
+.feed-content {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* 최대 3줄 표시 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: max-height 0.3s ease;
+}
+
+.feed-content.expanded {
+    -webkit-line-clamp: unset;
+    max-height: 1000px;
+}
+
+.btn-detail {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    padding: 0;
+    margin-top: 4px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#load-more-btn:disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
+}
+
 /* Floating Timer */
 #floating-timer {
     position: fixed;
