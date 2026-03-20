@@ -1,6 +1,6 @@
 // State Management
 let state = {
-    user: null, // Firebase Auth user object
+    user: null, // { uid: string, nickname: string }
     myNickname: '익명',
     currentStoreOwner: null, // UID of the store being viewed
     currentStoreOwnerNickname: '익명',
@@ -20,7 +20,6 @@ let state = {
 };
 
 let db;
-let auth;
 
 // DOM Elements
 const views = {
@@ -39,42 +38,21 @@ const floatingTimerToggle = document.getElementById('floating-timer-toggle');
 const loadMoreBtn = document.getElementById('load-more-btn');
 
 // Initialize App
-function init() {
+async function init() {
     try {
         if (!firebase.apps.length) {
             firebase.initializeApp({ projectId: "manread-74612" });
         }
         db = firebase.firestore();
-        auth = firebase.auth();
         
-        // Auth Listener: 로그인 상태 감지 및 자동 이동
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                state.user = user;
-                showLoading(true, "회원 정보를 확인하고 있습니다...");
-                
-                try {
-                    await syncUserProfile(user);
-                    restoreTimerState();
-                    
-                    // 로그인 성공 후 즉시 피드 화면으로 리다이렉션
-                    showView('feed');
-                    renderFeed();
-                    updateNavUI('feed');
-                } catch (e) {
-                    console.error("Profile sync failed:", e);
-                    alert("정보를 불러오지 못했습니다. 다시 로그인 해주세요.");
-                    auth.signOut();
-                } finally {
-                    showLoading(false);
-                }
-            } else {
-                state.user = null;
-                state.myNickname = '익명';
-                showView('login');
-                showLoading(false);
-            }
-        });
+        // Check localStorage for existing session
+        const savedNickname = localStorage.getItem('manread_user_nickname');
+        if (savedNickname) {
+            await handleLogin(savedNickname);
+        } else {
+            showView('login');
+            showLoading(false);
+        }
 
     } catch (e) {
         console.error("Init failed:", e);
@@ -88,25 +66,47 @@ function showLoading(show, message = "") {
     if (message) document.getElementById('loading-message').innerText = message;
 }
 
-// 사용자 프로필 동기화 및 신규 회원 생성
-async function syncUserProfile(user) {
-    const userRef = db.collection("users").doc(user.uid);
-    const doc = await userRef.get();
+// 로그인 처리 로직
+async function handleLogin(nickname) {
+    if (!nickname) return;
+    nickname = nickname.trim();
     
-    if (doc.exists) {
-        const data = doc.data();
-        state.myNickname = data.nickname || '익명 이웃';
-    } else {
-        // 신규 사용자: Firestore에 기본 프로필 생성
-        const initialName = user.displayName || '익명 이웃';
-        await userRef.set({
-            uid: user.uid,
-            nickname: initialName,
-            email: user.email,
-            photoURL: user.photoURL,
-            joinedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        state.myNickname = initialName;
+    showLoading(true, "회원 정보를 확인하고 있습니다...");
+    try {
+        // 닉네임으로 사용자 검색
+        const snap = await db.collection("users").where("nickname", "==", nickname).limit(1).get();
+        
+        if (!snap.empty) {
+            const userDoc = snap.docs[0];
+            const userData = userDoc.data();
+            state.user = { uid: userDoc.id, nickname: userData.nickname };
+            state.myNickname = userData.nickname;
+        } else {
+            // 신규 사용자 생성
+            const newUserRef = db.collection("users").doc();
+            const userData = {
+                uid: newUserRef.id,
+                nickname: nickname,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await newUserRef.set(userData);
+            state.user = { uid: newUserRef.id, nickname: nickname };
+            state.myNickname = nickname;
+        }
+        
+        localStorage.setItem('manread_user_nickname', state.myNickname);
+        restoreTimerState();
+        
+        // 로그인 성공 후 즉시 피드 화면으로 리다이렉션
+        showView('feed');
+        renderFeed();
+        updateNavUI('feed');
+    } catch (e) {
+        console.error("Login failed:", e);
+        alert("정보를 불러오지 못했습니다. 다시 시도해주세요.");
+        logout();
+    } finally {
+        showLoading(false);
     }
 }
 
@@ -126,20 +126,25 @@ function updateNavUI(activeView) {
 }
 
 // 1. Auth Actions
-document.getElementById('google-login-btn').onclick = () => {
-    showLoading(true, "구글 로그인을 진행 중입니다...");
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(e => {
-        showLoading(false);
-        if (e.code !== 'auth/popup-closed-by-user') {
-            alert("로그인 중 오류가 발생했습니다: " + e.message);
-        }
-    });
+document.getElementById('login-btn').onclick = () => {
+    const nickname = document.getElementById('login-nickname-input').value;
+    if (!nickname) {
+        alert('아이디(닉네임)를 입력해주세요.');
+        return;
+    }
+    handleLogin(nickname);
 };
+
+function logout() {
+    state.user = null;
+    state.myNickname = '익명';
+    localStorage.removeItem('manread_user_nickname');
+    showView('login');
+}
 
 document.getElementById('logout-btn').onclick = () => {
     if (confirm('로그아웃 하시겠습니까?')) {
-        auth.signOut();
+        logout();
     }
 };
 
@@ -155,16 +160,38 @@ document.getElementById('edit-profile-btn').onclick = () => {
 document.getElementById('save-nickname-btn').onclick = async () => {
     const newName = document.getElementById('nickname-edit-input').value.trim();
     if (!newName) return;
+    if (newName === state.myNickname) {
+        document.getElementById('profile-settings').classList.add('hidden');
+        return;
+    }
     
     try {
-        showLoading(true, "닉네임을 저장하고 있습니다...");
+        showLoading(true, "아이디를 변경하고 있습니다...");
+        
+        // 중복 체크
+        const snap = await db.collection("users").where("nickname", "==", newName).limit(1).get();
+        if (!snap.empty) {
+            alert('이미 존재하는 아이디입니다. 다른 이름을 입력해주세요.');
+            showLoading(false);
+            return;
+        }
+
+        // 닉네임 업데이트
         await db.collection("users").doc(state.user.uid).update({ nickname: newName });
+        
         state.myNickname = newName;
+        state.user.nickname = newName;
+        localStorage.setItem('manread_user_nickname', newName);
+        
         document.getElementById('profile-settings').classList.add('hidden');
         document.getElementById('user-greeting').innerText = "나의 책방";
-        alert('닉네임이 변경되었습니다.');
-    } catch (e) { alert(e.message); }
-    finally { showLoading(false); }
+        alert('아이디가 변경되었습니다. 다음 접속 시 이 아이디를 사용하세요.');
+        
+    } catch (e) { 
+        alert(e.message); 
+    } finally { 
+        showLoading(false); 
+    }
 };
 
 // 2. Navigation
@@ -530,7 +557,7 @@ function updateTimerDisplay() {
 
 function updateFloatingTimerVisibility() {
     if (!floatingTimer) return;
-    const isTrackerView = !views.tracker.classList.contains('hidden');
+    const isTrackerView = views.tracker && !views.tracker.classList.contains('hidden');
     floatingTimer.classList.toggle('hidden', state.timer.seconds === 0 || isTrackerView);
     floatingTimer.classList.toggle('paused', !state.timer.isRunning);
     if (floatingTimerToggle) floatingTimerToggle.innerText = state.timer.isRunning ? "⏸️" : "▶️";

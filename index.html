@@ -33,9 +33,16 @@
         <div id="login-view" class="card" style="text-align: center;">
             <h1 class="serif">반가워요 👋</h1>
             <p>우리들의 책방에 로그인하여 나만의 독서 기록을 시작하세요.</p>
-            <button id="google-login-btn" class="btn" style="width: 100%; background: #4285F4; margin-top: 10px;">
-                <span style="margin-right: 8px;">G</span> 구글로 계속하기
-            </button>
+            <div style="margin-top: 20px;">
+                <input type="text" id="login-nickname-input" placeholder="원하는 아이디(닉네임)를 입력하세요" style="text-align: center; font-size: 1.1rem; padding: 12px; margin-bottom: 12px;">
+                <button id="login-btn" class="btn" style="width: 100%; background: var(--accent);">
+                    내 책방 입장하기
+                </button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 15px;">
+                * 비밀번호 없이 아이디만으로 접속합니다.<br>
+                입력하신 아이디는 데이터 연결 및 작성자로 사용됩니다.
+            </p>
         </div>
 
         <!-- 2. 메인 피드 -->
