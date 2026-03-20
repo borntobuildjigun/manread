@@ -72,9 +72,41 @@
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <h1 class="serif" id="user-greeting">나의 책방</h1>
-                        <button id="edit-profile-btn" class="btn-icon" title="프로필 수정">✏️</button>
+                        <button id="open-settings-btn" class="btn-icon" title="설정" style="font-size: 1.2rem;">⚙️</button>
                     </div>
                     <div id="owner-actions" class="hidden" style="display: flex; gap: 8px;">
+...
+        <!-- 8. 설정 모달 -->
+        <div id="settings-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 30000; display: flex; align-items: center; justify-content: center;">
+            <div class="card" style="width: 90%; max-width: 400px; padding: 24px;">
+                <h2 class="serif" style="margin-top: 0;">⚙️ 책방 설정</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">아이디(닉네임)</label>
+                    <input type="text" id="settings-nickname-input" placeholder="변경할 닉네임" maxlength="15">
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">나의 고유 색상</label>
+                    <div id="color-palette" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                        <!-- 파스텔톤 색상들 -->
+                        <div class="color-item" data-color="#ffec99" style="background: #ffec99; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#b2f2bb" style="background: #b2f2bb; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#a5d8ff" style="background: #a5d8ff; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#ffc9c9" style="background: #ffc9c9; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#eebefa" style="background: #eebefa; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#ffccf2" style="background: #ffccf2; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#d3f9d8" style="background: #d3f9d8; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;"></div>
+                        <div class="color-item" data-color="#f8f9fa" style="background: #f8f9fa; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid #eee;"></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="save-settings-btn" class="btn" style="flex: 2;">설정 저장</button>
+                    <button id="close-settings-btn" class="btn btn-outline" style="flex: 1;">닫기</button>
+                </div>
+            </div>
+        </div>
                         <button id="trash-btn" class="btn btn-outline" style="border-color: #e74c3c; color: #e74c3c;">🗑️</button>
                         <button id="add-book-btn" class="btn btn-outline">+ 새 책</button>
                         <button id="logout-btn" class="btn btn-outline" style="border-color: #95a5a6; color: #95a5a6;">로그아웃</button>
@@ -89,6 +121,11 @@
                     </div>
                     <div style="border-top: 1px solid rgba(0,0,0,0.05); padding-top: 12px; text-align: right;">
                         <button id="delete-account-btn" class="btn btn-small btn-outline" style="border-color: #e74c3c; color: #e74c3c; font-size: 0.8rem;">아이디 삭제</button>
+
+
+
+
+
 
 
 
