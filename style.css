@@ -244,3 +244,142 @@ input, textarea {
 #floating-timer-display:hover {
     text-decoration: underline;
 }
+
+/* Activity Card Design Improvements */
+.feed-item {
+    padding: 16px !important;
+    border-radius: 16px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.feed-user-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.feed-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.book-cover-placeholder {
+    width: 48px;
+    height: 64px;
+    background: #fdfcf8;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.book-info-content {
+    flex: 1;
+}
+
+.book-title-emphasized {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+}
+
+.reading-time {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.blinking-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #2ecc71;
+    border-radius: 50%;
+    display: inline-block;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.feed-footer {
+    border-top: 1px solid #f5f5f5;
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+.reaction-container {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.btn-emoji {
+    background: white;
+    border: 1px solid #eee;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.btn-emoji:hover {
+    background: #f8f9fa;
+    border-color: #ddd;
+}
+
+.btn-emoji.active {
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+}
+
+.comment-summary {
+    font-size: 0.85rem;
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comment-summary:hover {
+    text-decoration: underline;
+}
+
+.feed-user:hover {
+    text-decoration: underline;
+}

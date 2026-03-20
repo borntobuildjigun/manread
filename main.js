@@ -233,44 +233,69 @@ async function renderFeed() {
 function createActivityCard(act, id) {
     const div = document.createElement('div');
     div.className = 'card feed-item';
-    const timeStr = act.createdAt ? new Date(act.createdAt.toDate()).toLocaleString() : '';
+    const timeStr = act.createdAt ? new Date(act.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const isMe = state.user && act.uid === state.user.uid;
     const authorName = isMe ? `${act.nickname || state.myNickname} (나)` : (act.nickname || '익명');
     const userColor = act.color || '#f8f9fa';
-    div.style.borderLeft = `6px solid ${userColor}`;
 
     const reactions = act.reactions || {};
     const emojis = ['📖', '❤️', '👍', '😮', '👏'];
     const emojiTooltips = { '📖': '나도 읽고 싶어요', '❤️': '감동적이에요', '👍': '추천해요', '😮': '놀라워요', '👏': '대단해요' };
 
+    // Format content based on type
+    let displayContent = '';
+    let titleExtra = '';
+    if (act.type === 'timer' && act.content) {
+        const minMatch = act.content.match(/\d+/);
+        const minutes = minMatch ? minMatch[0] : '0';
+        displayContent = `<div class="reading-time">🕒 ${minutes}m <span class="blinking-dot"></span></div>`;
+    } else if (act.type === 'record' && act.content) {
+        displayContent = `<div id="content-${id}" class="quote-box serif feed-content" style="margin-top: 8px;">${act.content}</div>`;
+    } else if (act.type === 'book') {
+        titleExtra = `<span style="font-size: 0.9rem; margin-left: 4px;">📖</span>`;
+    }
+
     div.innerHTML = `
-        <div style="margin-bottom:8px;">
-            <span class="feed-user" style="font-weight:700; cursor:pointer;" onclick="enterBookstore('${act.uid}')">${authorName}</span>님이 
-            <strong>${act.bookTitle}</strong> 책에 
-            ${act.type === 'record' ? '기록을 남겼습니다.' : '관심을 가졌습니다.'}
-        </div>
-        ${act.content ? `<div id="content-${id}" class="quote-box serif feed-content">${act.content}</div>` : ''}
-        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px; margin-bottom:15px;">${timeStr}</div>
-        
-        <div class="reaction-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
-            ${emojis.map(e => {
-                const isActive = act.userReactions && act.userReactions[state.user?.uid]?.includes(e);
-                return `
-                <button class="btn-emoji" onclick="handleReaction('${id}', '${e}', ${isActive})" title="${emojiTooltips[e]}"
-                        style="background: ${isActive ? 'var(--accent-soft)' : 'white'}; border: 1px solid ${isActive ? 'var(--accent)' : '#eee'}; padding: 4px 8px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                    <span>${e}</span> <span style="font-weight: 600;">${reactions[e] || 0}</span>
-                </button>`;
-            }).join('')}
+        <div class="feed-header">
+            <div class="feed-user-info">
+                <span class="color-dot" style="background: ${userColor}"></span>
+                <span class="feed-user" style="font-weight:700; cursor:pointer;" onclick="enterBookstore('${act.uid}')">${authorName}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); opacity: 0.7;">${timeStr}</span>
+            </div>
+            <div style="font-size: 1rem; opacity: 0.6;">${act.type === 'timer' ? '🕒' : (act.type === 'record' ? '✍️' : '❤️')}</div>
         </div>
 
-        <div class="comment-summary" onclick="toggleComments('${id}')" style="font-size: 0.85rem; color: var(--accent); cursor: pointer; font-weight: 600; padding: 8px 0; border-top: 1px solid #f5f5f5;">
-            💬 댓글 ${act.commentCount || 0}개 보기
+        <div class="feed-body">
+            <div class="book-cover-placeholder">📖</div>
+            <div class="book-info-content">
+                <h3 class="book-title-emphasized">${act.bookTitle}${titleExtra}</h3>
+                ${act.type === 'timer' ? displayContent : ''}
+            </div>
         </div>
-        <div id="comments-area-${id}" class="hidden" style="margin-top: 10px;">
+        
+        ${act.type === 'record' ? displayContent : ''}
+
+        <div class="feed-footer">
+            <div class="reaction-container">
+                ${emojis.map(e => {
+                    const isActive = act.userReactions && act.userReactions[state.user?.uid]?.includes(e);
+                    return `
+                    <button class="btn-emoji ${isActive ? 'active' : ''}" onclick="handleReaction('${id}', '${e}', ${isActive})" title="${emojiTooltips[e]}">
+                        <span>${e}</span> <span style="font-weight: 600;">${reactions[e] || 0}</span>
+                    </button>`;
+                }).join('')}
+            </div>
+
+            <div class="comment-summary" onclick="toggleComments('${id}')">
+                <span>💬</span> <span>댓글 ${act.commentCount || 0}개 보기</span>
+            </div>
+        </div>
+
+        <div id="comments-area-${id}" class="hidden" style="margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px;">
             <div id="comment-list-${id}" style="margin-bottom: 15px;"></div>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="comment-input-${id}" placeholder="따뜻한 댓글을 남겨주세요..." style="font-size: 0.85rem; padding: 8px; margin-bottom: 0;">
-                <button class="btn btn-small" onclick="submitComment('${id}')">등록</button>
+                <input type="text" id="comment-input-${id}" placeholder="따뜻한 댓글을 남겨주세요..." style="font-size: 0.85rem; padding: 8px; margin-bottom: 0; flex: 1; border: 1px solid #eee; border-radius: 8px;">
+                <button class="btn btn-small" onclick="submitComment('${id}')" style="padding: 0 16px;">등록</button>
             </div>
         </div>
     `;
