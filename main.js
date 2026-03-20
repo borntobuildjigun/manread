@@ -45,6 +45,8 @@ async function init() {
         const savedNickname = localStorage.getItem('manread_user_nickname');
         if (savedNickname) {
             await handleLogin(savedNickname);
+            const initialView = location.hash.replace('#', '') || 'feed';
+            if (views[initialView]) navigateTo(initialView, false);
         } else {
             showView('login');
             showLoading(false);
@@ -119,7 +121,8 @@ function updateNavUI(activeView) {
 const settingsModal = document.getElementById('settings-modal');
 let selectedColor = '#f8f9fa';
 
-document.getElementById('open-settings-btn').onclick = () => {
+document.getElementById('open-settings-btn').onclick = (e) => {
+    e.preventDefault(); e.stopPropagation();
     if (!state.user) return;
     document.getElementById('settings-nickname-input').value = state.myNickname;
     selectedColor = state.myColor;
@@ -127,10 +130,10 @@ document.getElementById('open-settings-btn').onclick = () => {
     settingsModal.classList.remove('hidden');
 };
 
-document.getElementById('close-settings-btn').onclick = () => settingsModal.classList.add('hidden');
+document.getElementById('close-settings-btn').onclick = (e) => { e.preventDefault(); settingsModal.classList.add('hidden'); };
 
 document.querySelectorAll('.color-item').forEach(item => {
-    item.onclick = () => { selectedColor = item.dataset.color; updateColorPaletteUI(); };
+    item.onclick = (e) => { e.preventDefault(); selectedColor = item.dataset.color; updateColorPaletteUI(); };
 });
 
 function updateColorPaletteUI() {
@@ -141,7 +144,8 @@ function updateColorPaletteUI() {
     });
 }
 
-document.getElementById('save-settings-btn').onclick = async () => {
+document.getElementById('save-settings-btn').onclick = async (e) => {
+    e.preventDefault();
     const newName = document.getElementById('settings-nickname-input').value.trim();
     if (!newName) return alert('아이디를 입력해주세요.');
     showLoading(true, "설정을 저장하고 있습니다...");
@@ -168,7 +172,8 @@ document.getElementById('save-settings-btn').onclick = async () => {
 };
 
 // Auth Actions
-document.getElementById('login-btn').onclick = () => {
+document.getElementById('login-btn').onclick = (e) => {
+    e.preventDefault();
     const nickname = document.getElementById('login-nickname-input').value;
     if (!nickname) return alert('아이디(닉네임)를 입력해주세요.');
     handleLogin(nickname);
@@ -182,7 +187,7 @@ function logout() {
     showView('login');
 }
 
-document.getElementById('logout-btn').onclick = () => { if (confirm('로그아웃 하시겠습니까?')) logout(); };
+document.getElementById('logout-btn').onclick = (e) => { e.preventDefault(); if (confirm('로그아웃 하시겠습니까?')) logout(); };
 
 async function deleteAccount() {
     if (!state.user) return;
@@ -209,7 +214,7 @@ async function deleteAccount() {
         logout();
     } catch (e) { alert("삭제 중 오류 발생: " + e.message); } finally { showLoading(false); }
 }
-document.getElementById('delete-account-btn').onclick = deleteAccount;
+document.getElementById('delete-account-btn').onclick = (e) => { e.preventDefault(); deleteAccount(); };
 
 // Activity Feed Rendering
 async function renderFeed() {
@@ -242,7 +247,6 @@ function createActivityCard(act, id) {
     const emojis = ['📖', '❤️', '👍', '😮', '👏'];
     const emojiTooltips = { '📖': '나도 읽고 싶어요', '❤️': '감동적이에요', '👍': '추천해요', '😮': '놀라워요', '👏': '대단해요' };
 
-    // Format content based on type
     let displayContent = '';
     let titleExtra = '';
     if (act.type === 'timer' && act.content) {
@@ -264,7 +268,6 @@ function createActivityCard(act, id) {
             </div>
             <div style="font-size: 1rem; opacity: 0.6;">${act.type === 'timer' ? '🕒' : (act.type === 'record' ? '✍️' : '❤️')}</div>
         </div>
-
         <div class="feed-body">
             <div class="book-cover-placeholder">📖</div>
             <div class="book-info-content">
@@ -272,25 +275,16 @@ function createActivityCard(act, id) {
                 ${act.type === 'timer' ? displayContent : ''}
             </div>
         </div>
-        
         ${act.type === 'record' ? displayContent : ''}
-
         <div class="feed-footer">
             <div class="reaction-container">
                 ${emojis.map(e => {
                     const isActive = act.userReactions && act.userReactions[state.user?.uid]?.includes(e);
-                    return `
-                    <button class="btn-emoji ${isActive ? 'active' : ''}" onclick="handleReaction('${id}', '${e}', ${isActive})" title="${emojiTooltips[e]}">
-                        <span>${e}</span> <span style="font-weight: 600;">${reactions[e] || 0}</span>
-                    </button>`;
+                    return `<button class="btn-emoji ${isActive ? 'active' : ''}" onclick="handleReaction('${id}', '${e}', ${isActive})" title="${emojiTooltips[e]}"><span>${e}</span> <span style="font-weight: 600;">${reactions[e] || 0}</span></button>`;
                 }).join('')}
             </div>
-
-            <div class="comment-summary" onclick="toggleComments('${id}')">
-                <span>💬</span> <span>댓글 ${act.commentCount || 0}개 보기</span>
-            </div>
+            <div class="comment-summary" onclick="toggleComments('${id}')"><span>💬</span> <span>댓글 ${act.commentCount || 0}개 보기</span></div>
         </div>
-
         <div id="comments-area-${id}" class="hidden" style="margin-top: 10px; border-top: 1px dashed #eee; padding-top: 10px;">
             <div id="comment-list-${id}" style="margin-bottom: 15px;"></div>
             <div style="display: flex; gap: 8px;">
@@ -302,28 +296,18 @@ function createActivityCard(act, id) {
     return div;
 }
 
-// Reaction Logic (Toggle support)
 window.handleReaction = async (postId, emoji, alreadyActive) => {
     if (!state.user) return alert('아이디를 먼저 설정해주세요.');
     const postRef = db.collection("activities").doc(postId);
     try {
         if (alreadyActive) {
-            // 취소: -1, 목록에서 제거
-            await postRef.update({
-                [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(-1),
-                [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayRemove(emoji)
-            });
+            await postRef.update({ [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(-1), [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayRemove(emoji) });
         } else {
-            // 추가: +1, 목록에 추가
-            await postRef.update({
-                [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(1),
-                [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayUnion(emoji)
-            });
+            await postRef.update({ [`reactions.${emoji}`]: firebase.firestore.FieldValue.increment(1), [`userReactions.${state.user.uid}`]: firebase.firestore.FieldValue.arrayUnion(emoji) });
         }
     } catch (e) { console.error(e); }
 };
 
-// Comment Logic
 window.toggleComments = async (postId) => {
     const area = document.getElementById(`comments-area-${postId}`);
     area.classList.toggle('hidden');
@@ -337,67 +321,13 @@ async function renderComments(postId) {
     list.innerHTML = '';
     if (snap.empty) { list.innerHTML = '<p style="font-size:0.8rem; color:var(--text-muted);">첫 댓글을 남겨보세요!</p>'; return; }
     snap.forEach(doc => {
-        const c = doc.data();
-        const cid = doc.id;
-        const div = document.createElement('div');
-        div.id = `comment-node-${cid}`;
-        div.style.padding = '8px 12px'; div.style.marginBottom = '8px'; div.style.fontSize = '0.85rem';
-        div.style.background = '#fcfcfc'; div.style.borderRadius = '0 8px 8px 0';
-        div.style.borderLeft = `4px solid ${c.color || '#eee'}`;
-        
+        const c = doc.data(); const cid = doc.id; const div = document.createElement('div');
+        div.id = `comment-node-${cid}`; div.setAttribute('style', `padding: 8px 12px; margin-bottom: 8px; font-size: 0.85rem; background: #fcfcfc; border-radius: 0 8px 8px 0; border-left: 4px solid ${c.color || '#eee'};`);
         const isMyComment = state.user && c.uid === state.user.uid;
-
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span style="font-weight:700;">${c.nickname}</span>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span style="font-size:0.7rem; color:var(--text-muted);">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString() : ''}</span>
-                    ${isMyComment ? `
-                        <button class="btn-text" onclick="startEditComment('${postId}', '${cid}', \`${c.text}\`)" style="font-size:0.7rem; color:var(--accent);">수정</button>
-                        <button class="btn-text" onclick="deleteComment('${postId}', '${cid}')" style="font-size:0.7rem; color:#e74c3c;">삭제</button>
-                    ` : ''}
-                </div>
-            </div>
-            <div class="comment-text-body">${c.text}</div>
-        `;
+        div.innerHTML = `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="font-weight:700;">${c.nickname}</span><div style="display:flex; gap:8px; align-items:center;"><span style="font-size:0.7rem; color:var(--text-muted);">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleDateString() : ''}</span>${isMyComment ? `<button class="btn-text" onclick="startEditComment('${postId}', '${cid}', \`${c.text}\`)" style="font-size:0.7rem; color:var(--accent);">수정</button><button class="btn-text" onclick="deleteComment('${postId}', '${cid}')" style="font-size:0.7rem; color:#e74c3c;">삭제</button>` : ''}</div></div><div class="comment-text-body">${c.text}</div>`;
         list.appendChild(div);
     });
 }
-
-window.startEditComment = (postId, cid, oldText) => {
-    const node = document.getElementById(`comment-node-${cid}`);
-    const textBody = node.querySelector('.comment-text-body');
-    const originalContent = textBody.innerHTML;
-    
-    textBody.innerHTML = `
-        <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
-            <textarea id="edit-input-${cid}" style="font-size:0.85rem; padding:8px; width:100%; border:1px solid var(--accent); border-radius:4px;">${oldText}</textarea>
-            <div style="display:flex; gap:4px; justify-content:flex-end;">
-                <button class="btn btn-small" onclick="saveEditComment('${postId}', '${cid}')">저장</button>
-                <button class="btn btn-small btn-outline" onclick="renderComments('${postId}')">취소</button>
-            </div>
-        </div>
-    `;
-};
-
-window.saveEditComment = async (postId, cid) => {
-    const newText = document.getElementById(`edit-input-${cid}`).value.trim();
-    if (!newText) return;
-    try {
-        await db.collection("activities").doc(postId).collection("comments").doc(cid).update({ text: newText, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-        renderComments(postId);
-    } catch (e) { alert(e.message); }
-};
-
-window.deleteComment = async (postId, cid) => {
-    if (!confirm('댓글을 삭제할까요?')) return;
-    try {
-        const postRef = db.collection("activities").doc(postId);
-        await postRef.collection("comments").doc(cid).delete();
-        await postRef.update({ commentCount: firebase.firestore.FieldValue.increment(-1) });
-        renderComments(postId);
-    } catch (e) { alert(e.message); }
-};
 
 window.submitComment = async (postId) => {
     if (!state.user) return alert('아이디를 먼저 설정해주세요.');
@@ -406,50 +336,48 @@ window.submitComment = async (postId) => {
     if (!text) return;
     try {
         const postRef = db.collection("activities").doc(postId);
-        await postRef.collection("comments").add({
-            text, uid: state.user.uid, nickname: state.myNickname, color: state.myColor, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await postRef.collection("comments").add({ text, uid: state.user.uid, nickname: state.myNickname, color: state.myColor, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         await postRef.update({ commentCount: firebase.firestore.FieldValue.increment(1) });
-        input.value = '';
-        renderComments(postId);
+        input.value = ''; renderComments(postId);
     } catch (e) { alert(e.message); }
 };
 
-// ... (이하 Bookstore, People, Tracker, Timer 로직 유지)
-
 async function renderPeopleList() {
-    const list = document.getElementById('people-list'); list.innerHTML = '';
+    const list = document.getElementById('people-list'); list.innerHTML = '<p style="text-align:center; grid-column: 1 / -1;">로딩 중...</p>';
     const snap = await db.collection("users").orderBy("joinedAt", "desc").get();
+    list.innerHTML = '';
     snap.forEach(doc => {
         const user = doc.data(); const div = document.createElement('div'); div.className = 'card';
         const isMe = state.user && doc.id === state.user.uid;
         div.setAttribute('style', `text-align: center; cursor: pointer; border-bottom: 4px solid ${user.color || '#f8f9fa'};`);
         div.innerHTML = `<div style="font-size: 2rem;">📖</div><div style="font-weight:600;">${isMe ? user.nickname + ' (나)' : user.nickname}</div>`;
-        div.onclick = () => enterBookstore(doc.id);
+        div.onclick = (e) => { e.preventDefault(); e.stopPropagation(); enterBookstore(doc.id); };
         list.appendChild(div);
     });
 }
 
 async function enterBookstore(uid) {
     state.currentStoreOwner = uid;
-    const ownerDoc = await db.collection("users").doc(uid).get();
-    const ownerData = ownerDoc.data();
-    state.currentStoreOwnerNickname = ownerData ? ownerData.nickname : '익명';
-    const ownerColor = ownerData ? (ownerData.color || '#f8f9fa') : '#f8f9fa';
-    const isOwner = (state.user && state.user.uid === uid);
-    document.getElementById('user-greeting').innerText = isOwner ? "나의 책방" : `${state.currentStoreOwnerNickname}님의 책방`;
-    document.getElementById('user-greeting').style.borderBottom = `3px solid ${ownerColor}`;
-    document.getElementById('owner-actions').classList.toggle('hidden', !isOwner);
-    document.getElementById('open-settings-btn').classList.toggle('hidden', !isOwner);
-    showView('bookstore'); renderBooks(uid);
+    showLoading(true, "책방을 불러오고 있습니다...");
+    try {
+        const ownerDoc = await db.collection("users").doc(uid).get();
+        const ownerData = ownerDoc.data();
+        state.currentStoreOwnerNickname = ownerData ? ownerData.nickname : '익명';
+        const ownerColor = ownerData ? (ownerData.color || '#f8f9fa') : '#f8f9fa';
+        const isOwner = (state.user && state.user.uid === uid);
+        document.getElementById('user-greeting').innerText = isOwner ? "나의 책방" : `${state.currentStoreOwnerNickname}님의 책방`;
+        document.getElementById('user-greeting').style.borderBottom = `3px solid ${ownerColor}`;
+        document.getElementById('owner-actions').classList.toggle('hidden', !isOwner);
+        document.getElementById('open-settings-btn').classList.toggle('hidden', !isOwner);
+        showView('bookstore'); await renderBooks(uid);
+    } catch (e) { console.error(e); } finally { showLoading(false); }
 }
 
 async function renderBooks(ownerUid) {
     const list = document.getElementById('book-list'); list.innerHTML = '';
     const snap = await db.collection("users").doc(ownerUid).collection("books").orderBy("createdAt", "desc").get();
     snap.forEach(doc => {
-        const book = doc.data();
-        const div = document.createElement('div'); div.className = 'card';
+        const book = doc.data(); const div = document.createElement('div'); div.className = 'card';
         div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><div><h3 class="serif" style="margin:0;">${book.title}</h3><p style="margin:4px 0; color:var(--text-muted);">${book.author}</p></div><button class="btn btn-outline" onclick="openTracker('${doc.id}', '${book.title.replace(/'/g, "\\'")}')">${(state.user && state.user.uid === ownerUid) ? '읽기' : '구경'}</button></div>`;
         list.appendChild(div);
     });
@@ -460,30 +388,32 @@ window.openTracker = async (bid, title) => {
     const isOwner = (state.user && state.currentStoreOwner === state.user.uid);
     document.getElementById('timer-section').classList.toggle('hidden', !isOwner);
     document.getElementById('record-entry').classList.toggle('hidden', !isOwner);
-    updateTimerUI(); resetRecordInputs(); showView('tracker'); renderRecords(); renderSessions();
+    updateTimerUI(); resetRecordInputs(); showView('tracker');
+    showLoading(true, "기록을 불러오고 있습니다...");
+    await Promise.all([renderRecords(), renderSessions()]);
+    showLoading(false);
 };
 
-document.getElementById('save-record-btn').onclick = async () => {
-    if (!state.user) return alert('아이디를 먼저 설정해주세요.');
+document.getElementById('save-record-btn').onclick = async (e) => {
+    e.preventDefault(); if (!state.user) return alert('아이디를 먼저 설정해주세요.');
     const content = document.getElementById('record-input').value;
-    const page = document.getElementById('page-input').value || 0;
-    const paragraph = document.getElementById('paragraph-input').value || 0;
-    const line = document.getElementById('line-input').value || 0;
+    const page = document.getElementById('page-input').value || 0; const paragraph = document.getElementById('paragraph-input').value || 0; const line = document.getElementById('line-input').value || 0;
     if (!content) return;
+    showLoading(true, "저장 중...");
     try {
         const recordsRef = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("records");
         if (state.editingRecordId) {
             await recordsRef.doc(state.editingRecordId).update({ content, page, paragraph, line, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
             const recordSnap = await recordsRef.doc(state.editingRecordId).get();
             const activityId = recordSnap.data().relatedActivityId;
-            if (activityId) { await db.collection("activities").doc(activityId).update({ content, nickname: state.myNickname, color: state.myColor }); }
+            if (activityId) await db.collection("activities").doc(activityId).update({ content, nickname: state.myNickname, color: state.myColor });
             state.editingRecordId = null;
         } else {
             const activityId = await logActivity('record', content);
             await recordsRef.add({ content, page, paragraph, line, relatedActivityId: activityId, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         }
-        resetRecordInputs(); renderRecords();
-    } catch (e) { alert(e.message); }
+        resetRecordInputs(); await renderRecords();
+    } catch (e) { alert(e.message); } finally { showLoading(false); }
 };
 
 async function renderRecords() {
@@ -503,8 +433,7 @@ async function renderSessions() {
     const isOwner = (state.user && state.currentStoreOwner === state.user.uid);
     if (snap.empty) { list.innerHTML += '<p style="color:var(--text-muted); font-size:0.9rem;">기록된 세션이 없습니다.</p>'; return; }
     snap.forEach(doc => {
-        const sess = doc.data(); if (!sess.startTime) return;
-        const div = document.createElement('div'); div.className = 'card'; div.style.position = 'relative';
+        const sess = doc.data(); if (!sess.startTime) return; const div = document.createElement('div'); div.className = 'card'; div.setAttribute('style', 'position: relative;');
         div.innerHTML = `<div style="font-weight:700; color:var(--accent); margin-bottom:4px;">${sess.startTime.toDate().toLocaleDateString()}</div><div style="color:var(--text-main); font-size:0.85rem;">⏱️ ${Math.floor(sess.duration/60)}분 ${sess.duration%60}초</div>${isOwner ? `<button class="btn-icon" style="position:absolute; top:8px; right:8px; font-size:0.9rem; opacity:0.6;" onclick="deleteSession('${doc.id}', '${sess.relatedActivityId || ''}')">🗑️</button>` : ''}`;
         list.appendChild(div);
     });
@@ -512,11 +441,11 @@ async function renderSessions() {
 
 window.deleteSession = async (sid, activityId) => {
     if (!confirm('기록을 삭제할까요?')) return;
+    showLoading(true, "삭제 중...");
     try {
-        showLoading(true, "기록 삭제 중...");
         const batch = db.batch(); batch.delete(db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("sessions").doc(sid));
         if (activityId) batch.delete(db.collection("activities").doc(activityId));
-        await batch.commit(); renderSessions();
+        await batch.commit(); await renderSessions();
     } catch (e) { alert(e.message); } finally { showLoading(false); }
 };
 
@@ -525,7 +454,7 @@ window.startEditRecord = (id, content, page, paragraph, line) => {
     document.getElementById('save-record-btn').innerText = "수정 완료"; document.getElementById('cancel-edit-btn').classList.remove('hidden'); document.getElementById('record-entry').scrollIntoView({ behavior: 'smooth' });
 };
 
-document.getElementById('cancel-edit-btn').onclick = () => resetRecordInputs();
+document.getElementById('cancel-edit-btn').onclick = (e) => { e.preventDefault(); resetRecordInputs(); };
 function resetRecordInputs() {
     state.editingRecordId = null; document.getElementById('record-input').value = ''; document.getElementById('page-input').value = ''; document.getElementById('paragraph-input').value = ''; document.getElementById('line-input').value = '';
     document.getElementById('save-record-btn').innerText = "기록하기"; document.getElementById('cancel-edit-btn').classList.add('hidden');
@@ -533,24 +462,28 @@ function resetRecordInputs() {
 
 window.deleteRecord = async (rid) => {
     if (!confirm('삭제하시겠습니까? 휴지통으로 이동합니다.')) return;
-    const ref = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("records").doc(rid);
-    const snap = await ref.get(); await db.collection("users").doc(state.user.uid).collection("trash").add({ ...snap.data(), originalBookId: state.currentBook.id, deletedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    await ref.delete(); renderRecords();
+    showLoading(true, "휴지통으로 이동 중...");
+    try {
+        const ref = db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("records").doc(rid);
+        const snap = await ref.get(); await db.collection("users").doc(state.user.uid).collection("trash").add({ ...snap.data(), originalBookId: state.currentBook.id, deletedAt: firebase.firestore.FieldValue.serverTimestamp() });
+        await ref.delete(); await renderRecords();
+    } catch (e) { alert(e.message); } finally { showLoading(false); }
 };
 
 async function logActivity(type, content) {
     if (!state.user || !state.currentBook) return null;
-    const docRef = await db.collection("activities").add({ 
-        uid: state.user.uid, nickname: state.myNickname, color: state.myColor, type, bookTitle: state.currentBook.title, content, createdAt: firebase.firestore.FieldValue.serverTimestamp(), reactions: {}, commentCount: 0
-    });
+    const docRef = await db.collection("activities").add({ uid: state.user.uid, nickname: state.myNickname, color: state.myColor, type, bookTitle: state.currentBook.title, content, createdAt: firebase.firestore.FieldValue.serverTimestamp(), reactions: {}, commentCount: 0 });
     return docRef.id;
 }
 
-document.getElementById('add-book-btn').onclick = async () => {
-    const title = prompt('제목:'); const author = prompt('저자:');
+document.getElementById('add-book-btn').onclick = async (e) => {
+    e.preventDefault(); const title = prompt('제목:'); const author = prompt('저자:');
     if (title && author && state.user) {
-        await db.collection("users").doc(state.user.uid).collection("books").add({ title, author, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        logActivity('book', `새 책 추가`); renderBooks(state.user.uid);
+        showLoading(true, "새 책을 추가하고 있습니다...");
+        try {
+            await db.collection("users").doc(state.user.uid).collection("books").add({ title, author, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            await logActivity('book', `새 책 추가`); await renderBooks(state.user.uid);
+        } catch (e) { alert(e.message); } finally { showLoading(false); }
     }
 };
 
@@ -583,26 +516,29 @@ async function finishReading() {
     if (state.timer.seconds > 0) {
         let timeStr = `${Math.floor(state.timer.seconds/60)}분`;
         if (confirm(`${timeStr} 동안 읽으셨네요! 종료할까요?`)) {
-            const activityId = await logActivity('timer', `${timeStr} 동안 독서함`);
-            await db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("sessions").add({
-                startTime: firebase.firestore.Timestamp.fromDate(new Date(new Date().getTime() - state.timer.seconds * 1000)), endTime: firebase.firestore.FieldValue.serverTimestamp(), duration: state.timer.seconds, relatedActivityId: activityId, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            if (state.timer.interval) clearInterval(state.timer.interval);
-            state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null, persistedSeconds: 0 };
-            clearTimerState(); updateTimerUI(); renderSessions();
+            showLoading(true, "독서 세션을 저장하고 있습니다...");
+            try {
+                const activityId = await logActivity('timer', `${timeStr} 동안 독서함`);
+                await db.collection("users").doc(state.user.uid).collection("books").doc(state.currentBook.id).collection("sessions").add({
+                    startTime: firebase.firestore.Timestamp.fromDate(new Date(new Date().getTime() - state.timer.seconds * 1000)), endTime: firebase.firestore.FieldValue.serverTimestamp(), duration: state.timer.seconds, relatedActivityId: activityId, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                if (state.timer.interval) clearInterval(state.timer.interval);
+                state.timer = { interval: null, seconds: 0, isRunning: false, startTime: null, persistedSeconds: 0 };
+                clearTimerState(); updateTimerUI(); await renderSessions();
+            } catch (e) { alert(e.message); } finally { showLoading(false); }
         }
     }
 }
 
-document.getElementById('back-to-store-btn').onclick = () => enterBookstore(state.currentStoreOwner);
-document.getElementById('back-from-trash-btn').onclick = () => enterBookstore(state.user.uid);
-document.getElementById('trash-btn').onclick = () => { showView('trash'); renderTrash(); };
+document.getElementById('back-to-store-btn').onclick = (e) => { e.preventDefault(); enterBookstore(state.currentStoreOwner); };
+document.getElementById('back-from-trash-btn').onclick = (e) => { e.preventDefault(); enterBookstore(state.user.uid); };
+document.getElementById('trash-btn').onclick = (e) => { e.preventDefault(); showView('trash'); renderTrash(); };
 
 async function renderTrash() {
-    const list = document.getElementById('trash-list'); list.innerHTML = '';
+    const list = document.getElementById('trash-list'); list.innerHTML = '<p style="text-align:center;">로딩 중...</p>';
     const snap = await db.collection("users").doc(state.user.uid).collection("trash").orderBy("deletedAt", "desc").get();
     if (snap.empty) { list.innerHTML = '<div class="card">비어 있음</div>'; return; }
-    snap.forEach(doc => {
+    list.innerHTML = ''; snap.forEach(doc => {
         const rec = doc.data(); const div = document.createElement('div'); div.className = 'card';
         div.innerHTML = `<div class="quote-box serif">${rec.content}</div><div style="margin-top:12px; display:flex; gap:8px;"><button class="btn btn-small" onclick="restoreRecord('${doc.id}')">복원</button><button class="btn btn-danger btn-small" onclick="permanentlyDeleteRecord('${doc.id}')">영구 삭제</button></div>`;
         list.appendChild(div);
@@ -610,24 +546,25 @@ async function renderTrash() {
 }
 
 window.restoreRecord = async (tid) => {
-    const ref = db.collection("users").doc(state.user.uid).collection("trash").doc(tid);
-    const snap = await ref.get(); const data = snap.data();
-    await db.collection("users").doc(state.user.uid).collection("books").doc(data.originalBookId).collection("records").add({ ...data });
-    await ref.delete(); renderTrash();
+    showLoading(true, "복원 중...");
+    try {
+        const ref = db.collection("users").doc(state.user.uid).collection("trash").doc(tid);
+        const snap = await ref.get(); const data = snap.data();
+        await db.collection("users").doc(state.user.uid).collection("books").doc(data.originalBookId).collection("records").add({ ...data });
+        await ref.delete(); await renderTrash();
+    } catch (e) { alert(e.message); } finally { showLoading(false); }
 };
 
-window.permanentlyDeleteRecord = async (tid) => { if (confirm('영구 삭제하시겠습니까?')) { await db.collection("users").doc(state.user.uid).collection("trash").doc(tid).delete(); renderTrash(); } };
+window.permanentlyDeleteRecord = async (tid) => { if (confirm('영구 삭제하시겠습니까?')) { showLoading(true, "삭제 중..."); try { await db.collection("users").doc(state.user.uid).collection("trash").doc(tid).delete(); await renderTrash(); } catch (e) { alert(e.message); } finally { showLoading(false); } } };
 
 // Admin Dashboard
 async function renderAdminDashboard() {
     if (!state.isAdmin) return;
     const todayTs = firebase.firestore.Timestamp.fromDate(new Date(new Date().setHours(0,0,0,0)));
-    const usersSnap = await db.collection("users").get();
-    document.getElementById('stat-new-users').innerText = usersSnap.docs.filter(d => d.data().joinedAt && d.data().joinedAt.toDate() >= todayTs.toDate()).length;
-    const actsSnap = await db.collection("activities").where("createdAt", ">=", todayTs).get();
-    document.getElementById('stat-new-posts').innerText = actsSnap.size;
-    document.getElementById('stat-active-readers').innerText = "1+"; 
-    renderAdminActivities(); renderAdminUsers();
+    const [uSnap, aSnap] = await Promise.all([db.collection("users").get(), db.collection("activities").where("createdAt", ">=", todayTs).get()]);
+    document.getElementById('stat-new-users').innerText = uSnap.docs.filter(d => d.data().joinedAt && d.data().joinedAt.toDate() >= todayTs.toDate()).length;
+    document.getElementById('stat-new-posts').innerText = aSnap.size; document.getElementById('stat-active-readers').innerText = "1+"; 
+    await Promise.all([renderAdminActivities(), renderAdminUsers()]);
 }
 
 async function renderAdminActivities() {
@@ -640,7 +577,7 @@ async function renderAdminActivities() {
     });
 }
 
-window.deleteActivityAdmin = async (id) => { if (confirm('삭제하시겠습니까?')) { await db.collection("activities").doc(id).delete(); renderAdminActivities(); } };
+window.deleteActivityAdmin = async (id) => { if (confirm('삭제하시겠습니까?')) { showLoading(true, "삭제 중..."); try { await db.collection("activities").doc(id).delete(); await renderAdminActivities(); } catch (e) { alert(e.message); } finally { showLoading(false); } } };
 
 async function renderAdminUsers() {
     const list = document.getElementById('admin-user-list'); list.innerHTML = '';
@@ -652,12 +589,12 @@ async function renderAdminUsers() {
     });
 }
 
-window.editUserAdmin = async (uid, oldName) => { const newName = prompt('새 닉네임:', oldName); if (newName && newName !== oldName) { await db.collection("users").doc(uid).update({ nickname: newName }); renderAdminUsers(); } };
-window.blockUserAdmin = async (uid) => { if (confirm('차단하시겠습니까?')) { await db.collection("users").doc(uid).delete(); renderAdminUsers(); } };
+window.editUserAdmin = async (uid, oldName) => { const n = prompt('새 닉네임:', oldName); if (n && n !== oldName) { showLoading(true, "수정 중..."); try { await db.collection("users").doc(uid).update({ nickname: n }); await renderAdminUsers(); } catch (e) { alert(e.message); } finally { showLoading(false); } } };
+window.blockUserAdmin = async (uid) => { if (confirm('차단하시겠습니까?')) { showLoading(true, "차단 중..."); try { await db.collection("users").doc(uid).delete(); await renderAdminUsers(); } catch (e) { alert(e.message); } finally { showLoading(false); } } };
 
-document.getElementById('save-announcement-btn').onclick = async () => {
-    const content = document.getElementById('admin-announcement-input').value.trim();
-    if (content) { await db.collection("announcements").add({ content, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); document.getElementById('admin-announcement-input').value = ''; alert('공지 등록됨'); renderAnnouncements(); }
+document.getElementById('save-announcement-btn').onclick = async (e) => {
+    e.preventDefault(); const c = document.getElementById('admin-announcement-input').value.trim();
+    if (c) { showLoading(true, "공지 등록 중..."); try { await db.collection("announcements").add({ content: c, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); document.getElementById('admin-announcement-input').value = ''; alert('공지 등록됨'); await renderAnnouncements(); } catch (e) { alert(e.message); } finally { showLoading(false); } }
 };
 
 async function renderAnnouncements() {
@@ -667,15 +604,32 @@ async function renderAnnouncements() {
 }
 
 document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-    btn.onclick = () => {
-        const tab = btn.dataset.tab; document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('btn-outline', b !== btn));
-        document.getElementById('admin-tab-content').classList.toggle('hidden', tab !== 'content'); document.getElementById('admin-tab-users').classList.toggle('hidden', tab !== 'users');
-    };
+    btn.onclick = (e) => { e.preventDefault(); const t = btn.dataset.tab; document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('btn-outline', b !== btn)); document.getElementById('admin-tab-content').classList.toggle('hidden', t !== 'content'); document.getElementById('admin-tab-users').classList.toggle('hidden', t !== 'users'); };
 });
 
-if (floatingTimerDisplay) floatingTimerDisplay.onclick = (e) => { e.stopPropagation(); if (state.currentBook) openTracker(state.currentBook.id, state.currentBook.title); };
-if (floatingTimerToggle) floatingTimerToggle.onclick = (e) => { e.stopPropagation(); toggleTimer(); };
-const timerBtn = document.getElementById('timer-btn'); const finishBtn = document.getElementById('finish-btn');
-if (timerBtn) timerBtn.onclick = toggleTimer; if (finishBtn) finishBtn.onclick = finishReading;
+// Navigation Handling
+async function navigateTo(viewName, pushState = true) {
+    if (viewName === 'login' && state.user) viewName = 'feed';
+    if (viewName !== 'login' && !state.user) viewName = 'login';
+    showView(viewName); updateNavUI(viewName);
+    if (pushState) history.pushState({ view: viewName }, '', `#${viewName}`);
+    try {
+        if (viewName === 'feed') await renderFeed();
+        else if (viewName === 'people') { showLoading(true, "마을 사람들을 불러오고 있습니다..."); await renderPeopleList(); }
+        else if (viewName === 'bookstore') { if (state.user) await enterBookstore(state.user.uid); }
+        else if (viewName === 'admin') { showLoading(true, "관리자 대시보드를 불러오고 있습니다..."); await renderAdminDashboard(); }
+    } catch (e) { console.error("Navigation error:", e); } finally { showLoading(false); }
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); navigateTo(btn.dataset.view); });
+});
+
+window.onpopstate = (e) => { const v = (e.state && e.state.view) || location.hash.replace('#', '') || 'feed'; navigateTo(v, false); };
+
+if (floatingTimerDisplay) floatingTimerDisplay.onclick = (e) => { e.preventDefault(); e.stopPropagation(); if (state.currentBook) openTracker(state.currentBook.id, state.currentBook.title); };
+if (floatingTimerToggle) floatingTimerToggle.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleTimer(); };
+if (document.getElementById('timer-btn')) document.getElementById('timer-btn').onclick = (e) => { e.preventDefault(); toggleTimer(); };
+if (document.getElementById('finish-btn')) document.getElementById('finish-btn').onclick = (e) => { e.preventDefault(); finishReading(); };
 
 init();
