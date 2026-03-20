@@ -32,6 +32,7 @@ const views = {
     trash: document.getElementById('trash-view')
 };
 const nav = document.getElementById('bottom-nav');
+const loadingOverlay = document.getElementById('loading-overlay');
 const floatingTimer = document.getElementById('floating-timer');
 const floatingTimerDisplay = document.getElementById('floating-timer-display');
 const floatingTimerToggle = document.getElementById('floating-timer-toggle');
@@ -46,18 +47,32 @@ function init() {
         db = firebase.firestore();
         auth = firebase.auth();
         
-        // Auth Listener
+        // Auth Listener: 로그인 상태 감지 및 자동 이동
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 state.user = user;
-                await syncUserProfile(user);
-                restoreTimerState();
-                showView('feed');
-                renderFeed();
+                showLoading(true, "회원 정보를 확인하고 있습니다...");
+                
+                try {
+                    await syncUserProfile(user);
+                    restoreTimerState();
+                    
+                    // 로그인 성공 후 즉시 피드 화면으로 리다이렉션
+                    showView('feed');
+                    renderFeed();
+                    updateNavUI('feed');
+                } catch (e) {
+                    console.error("Profile sync failed:", e);
+                    alert("정보를 불러오지 못했습니다. 다시 로그인 해주세요.");
+                    auth.signOut();
+                } finally {
+                    showLoading(false);
+                }
             } else {
                 state.user = null;
                 state.myNickname = '익명';
                 showView('login');
+                showLoading(false);
             }
         });
 
@@ -66,17 +81,29 @@ function init() {
     }
 }
 
+// 로딩 화면 제어
+function showLoading(show, message = "") {
+    if (!loadingOverlay) return;
+    loadingOverlay.classList.toggle('hidden', !show);
+    if (message) document.getElementById('loading-message').innerText = message;
+}
+
+// 사용자 프로필 동기화 및 신규 회원 생성
 async function syncUserProfile(user) {
     const userRef = db.collection("users").doc(user.uid);
     const doc = await userRef.get();
+    
     if (doc.exists) {
-        state.myNickname = doc.data().nickname || '익명 이웃';
+        const data = doc.data();
+        state.myNickname = data.nickname || '익명 이웃';
     } else {
-        // 초기 닉네임 설정 (구글 프로필 이름 사용)
+        // 신규 사용자: Firestore에 기본 프로필 생성
         const initialName = user.displayName || '익명 이웃';
         await userRef.set({
             uid: user.uid,
             nickname: initialName,
+            email: user.email,
+            photoURL: user.photoURL,
             joinedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         state.myNickname = initialName;
@@ -87,6 +114,7 @@ function showView(viewName) {
     Object.keys(views).forEach(v => {
         if (views[v]) views[v].classList.toggle('hidden', v !== viewName);
     });
+    // 네비게이션 바 노출 여부
     if (nav) nav.classList.toggle('hidden', viewName === 'login');
     updateFloatingTimerVisibility();
 }
@@ -99,8 +127,14 @@ function updateNavUI(activeView) {
 
 // 1. Auth Actions
 document.getElementById('google-login-btn').onclick = () => {
+    showLoading(true, "구글 로그인을 진행 중입니다...");
     const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(e => alert(e.message));
+    auth.signInWithPopup(provider).catch(e => {
+        showLoading(false);
+        if (e.code !== 'auth/popup-closed-by-user') {
+            alert("로그인 중 오류가 발생했습니다: " + e.message);
+        }
+    });
 };
 
 document.getElementById('logout-btn').onclick = () => {
@@ -123,13 +157,14 @@ document.getElementById('save-nickname-btn').onclick = async () => {
     if (!newName) return;
     
     try {
+        showLoading(true, "닉네임을 저장하고 있습니다...");
         await db.collection("users").doc(state.user.uid).update({ nickname: newName });
         state.myNickname = newName;
         document.getElementById('profile-settings').classList.add('hidden');
         document.getElementById('user-greeting').innerText = "나의 책방";
         alert('닉네임이 변경되었습니다.');
-        // 피드는 실시간 리스너가 아니므로 필요시 수동 갱신이나 다음 로드 시 반영됨
     } catch (e) { alert(e.message); }
+    finally { showLoading(false); }
 };
 
 // 2. Navigation
@@ -439,7 +474,7 @@ document.getElementById('add-book-btn').onclick = async () => {
     }
 };
 
-// 7. Timer & State Persistence (Rest of the logic remains similar but uses state.user.uid)
+// 7. Timer & State Persistence (UID-specific)
 function saveTimerState() {
     if (!state.user || !state.currentBook) return;
     const timerData = {
